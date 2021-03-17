@@ -1,0 +1,1 @@
+max_word_len = 20
