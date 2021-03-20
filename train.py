@@ -97,12 +97,25 @@ if __name__ == '__main__':
 
     print("\nTraining start")
     print(datetime.datetime.now())
+
+    train_loss_list = []
+    val_loss_list = []
+
+    train_f1_list = []
+    val_f1_list = []
+
     for epoch in range(epochs):
         print("\nTraining epoch " + str(epoch))
         train_epoch(model, train_dataloader, scheduler, optimizer)
 
         train_loss, train_f1 = evaluate_model(model, train_dataloader)
         val_loss, val_f1 = evaluate_model(model, val_dataloader)
+
+        train_loss_list.append(train_loss)
+        val_loss_list.append(val_loss)
+
+        train_f1_list.append(train_f1)
+        val_f1_list.append(val_f1)
 
         print("[train] loss: " + str(train_loss) + " F1: " + str(train_f1))
         print("[valid] loss: " + str(val_loss) + " F1: " + str(val_f1))

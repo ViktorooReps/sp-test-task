@@ -3,7 +3,6 @@ import torch
 max_word_len = 20
 batch_size = 10
 epochs = 50
-gradient_clipping = 5.0
 initial_lr = 0.015
 decay_rate = 0.05
 momentum = 0.9
