@@ -125,3 +125,5 @@ if __name__ == '__main__':
 
     save_obj(train_f1_list, "train_f1_list")
     save_obj(val_f1_list, "val_f1_list")
+
+    save_obj(model, "model")
