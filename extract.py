@@ -7,6 +7,7 @@ import csv
 import re
 
 from model.hyperparams import max_word_len
+from utils.memory_management import limit_memory
 
 def save_obj(obj, name): 
     with open('pickled/'+ name + '.pkl', 'wb') as f:  
@@ -18,10 +19,16 @@ def load_obj(name):
 
 def preprocess(raw_token):
     raw_token = str(raw_token)
+    
     if len(raw_token) > max_word_len:
-        raw_token = max(re.split('\W+', raw_token), key=lambda x: len(x))
+        new_token = max(re.split('\W+', raw_token), key=lambda x: len(x))
+    else:
+        new_token = raw_token
+    
+    if new_token == "":
+        new_token = raw_token[:max_word_len]
 
-    return str(raw_token).lower()
+    return str(new_token).lower()
 
 def unpack(filenames):
     token_voc = set()
@@ -48,8 +55,38 @@ def unpack(filenames):
 
     return (token_voc, char_voc, tag_voc)
 
+def get_labeled_tokens(filename):
+    df = pd.read_csv(filename, sep=" ", skip_blank_lines=True)
+    tokens = []
+    for token in df["-TOKEN-"]:
+        if len(str(token)) > 0 and token != "":
+            tokens.append(preprocess(token))
+    
+    labels = []
+    for label in df["-NETAG-"]:
+        if type(label) == str:
+            labels.append(label)
+
+    return (tokens, labels)
+
 if __name__ == '__main__':
+    limit_memory(7 * 1024 * 1024 * 1024)
     token_voc, char_voc, tag_voc = unpack(["conll2003/test.txt", "conll2003/train.txt", "conll2003/valid.txt"])
+
+    train_tokens, train_labels = get_labeled_tokens("conll2003/train.txt")
+    print("\nTotal train tokens: " + str(len(train_tokens)))
+    save_obj(train_tokens, "train_tokens")
+    save_obj(train_labels, "train_labels")
+
+    val_tokens, val_labels = get_labeled_tokens("conll2003/valid.txt")
+    print("Total val tokens: " + str(len(val_tokens)))
+    save_obj(val_tokens, "val_tokens")
+    save_obj(val_labels, "val_labels")
+
+    test_tokens, test_labels = get_labeled_tokens("conll2003/test.txt")
+    print("Total test tokens: " + str(len(test_tokens)))
+    save_obj(test_tokens, "test_tokens")
+    save_obj(test_labels, "test_labels")
 
     print("\nToken voc len: " + str(len(token_voc)))
     print("Char voc len: " + str(len(char_voc)))
