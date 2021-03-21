@@ -4,7 +4,7 @@ dropout_rate = 0.5
 
 max_word_len = 20
 
-batch_size = 20
+batch_size = 10
 
 epochs = 50
 
