@@ -1,5 +1,4 @@
-from extract import load_obj, save_obj
-from utils.memory_management import limit_memory
+from utils.memory_management import limit_memory, load_obj, save_obj
 from model.nerc import CNNbLSTMCRF, Data, collate_fn
 
 from math import sqrt

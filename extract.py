@@ -2,20 +2,11 @@ import pandas as pd
 import numpy as np
 
 import torch
-import pickle
 import csv
 import re
 
 from model.hyperparams import max_word_len
-from utils.memory_management import limit_memory
-
-def save_obj(obj, name): 
-    with open('pickled/'+ name + '.pkl', 'wb') as f:  
-        pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL) 
-
-def load_obj(name): 
-    with open('pickled/' + name + '.pkl', 'rb') as f: 
-        return pickle.load(f)
+from utils.memory_management import limit_memory, load_obj, save_obj
 
 def preprocess(raw_token):
     raw_token = str(raw_token)
