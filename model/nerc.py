@@ -70,6 +70,7 @@ class CNNbLSTMCRF(nn.Module):
         self.max_pool = nn.MaxPool2d(kernel_size=(1, max_word_len))
 
         self.inp_dropout = nn.Dropout(p=dropout_rate)
+        self.prev_hidden_lstm = (torch.zeros((2, 1, lstm_hidden_size)), torch.zeros((2, 1, lstm_hidden_size)))
         self.lstm = nn.LSTM(token_emb_size + char_repr_size, lstm_hidden_size, bidirectional=True, batch_first=True)
         self.outp_dropout = nn.Dropout(p=dropout_rate)
 
@@ -110,9 +111,11 @@ class CNNbLSTMCRF(nn.Module):
         x = torch.cat([xt, xc], dim=1)
         x = torch.unsqueeze(x, 0)
         x = self.inp_dropout(x)
-        x, _ = self.lstm(x)
+        x, hidden = self.lstm(x, self.prev_hidden_lstm)
         x = self.outp_dropout(x)
         x = self.hidden2emissions(x)
+
+        self.prev_hidden_lstm = hidden
 
         return x
 

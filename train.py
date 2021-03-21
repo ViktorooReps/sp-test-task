@@ -57,7 +57,8 @@ if __name__ == '__main__':
 
     token_vecs = torch.cat(token_vecs, dim=0)
 
-    model = CNNbLSTMCRF(char_to_idx, tok_to_idx, tag_to_idx, token_vecs)
+    model = CNNbLSTMCRF(char_to_idx, tok_to_idx, tag_to_idx, token_vecs, 
+        dropout_rate=dropout_rate)
 
     print("Trainable weights:")
     for name, param in model.named_parameters():
@@ -92,14 +93,28 @@ if __name__ == '__main__':
     optimizer = optim.SGD(model.parameters(), lr=initial_lr, momentum=momentum)
     scheduler = optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lr_lambda)
 
-    print("\nTraining start")
-    print(datetime.datetime.now())
-
     train_loss_list = []
     val_loss_list = []
 
     train_f1_list = []
     val_f1_list = []
+
+    train_loss, train_f1 = evaluate_model(model, train_dataloader)
+    val_loss, val_f1 = evaluate_model(model, val_dataloader)
+
+    train_loss_list.append(train_loss)
+    val_loss_list.append(val_loss)
+
+    train_f1_list.append(train_f1)
+    val_f1_list.append(val_f1)
+
+    print("\nBefore training:")
+    print("[train] loss: " + str(train_loss) + " F1: " + str(train_f1))
+    print("[valid] loss: " + str(val_loss) + " F1: " + str(val_f1))
+    print("learning rate: " + str(scheduler.get_last_lr()))
+
+    print("\nTraining start")
+    print(datetime.datetime.now())
 
     for epoch in range(epochs):
         print("\nTraining epoch " + str(epoch))
@@ -116,6 +131,7 @@ if __name__ == '__main__':
 
         print("[train] loss: " + str(train_loss) + " F1: " + str(train_f1))
         print("[valid] loss: " + str(val_loss) + " F1: " + str(val_f1))
+        print("learning rate: " + str(scheduler.get_last_lr()))
 
     save_obj(train_loss_list, "train_loss_list")
     save_obj(val_loss_list, "val_loss_list")
