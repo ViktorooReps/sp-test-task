@@ -116,6 +116,8 @@ class CNNbLSTMCRF(nn.Module):
         x = self.hidden2emissions(x)
 
         self.prev_hidden_lstm = hidden
+        self.prev_hidden_lstm[0].detach()
+        self.prev_hidden_lstm[1].detach()
 
         return x
 
