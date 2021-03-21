@@ -79,6 +79,11 @@ if __name__ == '__main__':
     save_obj(test_tokens, "test_tokens")
     save_obj(test_labels, "test_labels")
 
+    mini_tokens, mini_labels = get_labeled_tokens("conll2003/mini.txt")
+    print("Total mini tokens: " + str(len(mini_tokens)))
+    save_obj(mini_tokens, "mini_tokens")
+    save_obj(mini_labels, "mini_labels")
+
     print("\nToken voc len: " + str(len(token_voc)))
     print("Char voc len: " + str(len(char_voc)))
     print("Tag voc len: " + str(len(tag_voc)))

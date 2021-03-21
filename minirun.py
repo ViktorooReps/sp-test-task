@@ -10,7 +10,6 @@ from evaluate import evaluate_model
 
 import torch
 import torch.optim as optim
-import time
 import datetime
 
 def train_epoch(model, dataloader, scheduler, optimizer):
@@ -65,24 +64,13 @@ if __name__ == '__main__':
             print(name, param.data.shape)
             #print(name, param.data)
 
-    train_tokens = load_obj("train_tokens")
-    train_labels = load_obj("train_labels")
-    train_data = Data(train_tokens, train_labels, 
+    mini_tokens = load_obj("mini_tokens")
+    mini_labels = load_obj("mini_labels")
+    mini_data = Data(mini_tokens, mini_labels, 
         tok_to_idx, char_to_idx, tag_to_idx, max_token_len=max_word_len)
 
-    val_tokens = load_obj("val_tokens")
-    val_labels = load_obj("val_labels")
-    val_data = Data(val_tokens, val_labels, 
-        tok_to_idx, char_to_idx, tag_to_idx, max_token_len=max_word_len)
-
-    train_dataloader = DataLoader(
-        train_data, batch_size, 
-        shuffle=False, 
-        collate_fn=collate_fn, 
-        drop_last=True
-    )
-    val_dataloader = DataLoader(
-        val_data, batch_size, 
+    mini_dataloader = DataLoader(
+        mini_data, batch_size, 
         shuffle=False, 
         collate_fn=collate_fn, 
         drop_last=True
@@ -95,32 +83,19 @@ if __name__ == '__main__':
     print("\nTraining start")
     print(datetime.datetime.now())
 
-    train_loss_list = []
-    val_loss_list = []
+    mini_loss, mini_f1 = evaluate_model(model, mini_dataloader)
 
-    train_f1_list = []
-    val_f1_list = []
+    print("Pre train results:")
+    print("[mini] loss: " + str(mini_loss) + " F1: " + str(mini_f1))
 
-    for epoch in range(epochs):
+    for epoch in range(1000):
         print("\nTraining epoch " + str(epoch))
-        train_epoch(model, train_dataloader, scheduler, optimizer)
+        train_epoch(model, mini_dataloader, scheduler, optimizer)
 
-        train_loss, train_f1 = evaluate_model(model, train_dataloader)
-        val_loss, val_f1 = evaluate_model(model, val_dataloader)
+        mini_loss, mini_f1 = evaluate_model(model, mini_dataloader)
 
-        train_loss_list.append(train_loss)
-        val_loss_list.append(val_loss)
+        print("[mini] loss: " + str(mini_loss) + " F1: " + str(mini_f1))
 
-        train_f1_list.append(train_f1)
-        val_f1_list.append(val_f1)
-
-        print("[train] loss: " + str(train_loss) + " F1: " + str(train_f1))
-        print("[valid] loss: " + str(val_loss) + " F1: " + str(val_f1))
-
-    save_obj(train_loss_list, "train_loss_list")
-    save_obj(val_loss_list, "val_loss_list")
-
-    save_obj(train_f1_list, "train_f1_list")
-    save_obj(val_f1_list, "val_f1_list")
-
-    save_obj(model, "model")
+    print("\nPost train results:")
+    mini_loss, mini_f1 = evaluate_model(model, mini_dataloader)
+    print("[mini] loss: " + str(mini_loss) + " F1: " + str(mini_f1))
