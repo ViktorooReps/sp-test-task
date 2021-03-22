@@ -200,6 +200,8 @@ class bLSTMCRF(nn.Module):
                  token_emb_size=100, lstm_hidden_size=200, max_word_len=20, sent_len=10, dropout_rate=0.5):
         super(bLSTMCRF, self).__init__()
 
+        self.init_embeddings(len(char_to_idx), char_emb_size, len(tok_to_idx), token_emb_size, token_vecs)
+
         self.inp_dropout = nn.Dropout(p=dropout_rate)
         self.lstm = nn.LSTM(token_emb_size, lstm_hidden_size, bidirectional=True, batch_first=True)
         self.outp_dropout = nn.Dropout(p=dropout_rate)
@@ -230,11 +232,54 @@ class bLSTMCRF(nn.Module):
         toks: (batch_size)
         """
         x = self.tok_embs(toks)
+        x = torch.unsqueeze(x, 0)
 
         x = self.inp_dropout(x)
         x, _ = self.lstm(x)
         x = self.outp_dropout(x)
         x = self.hidden2emissions(x)
+
+        return x
+
+    def init_embeddings(self, num_chars, char_emb_size, voc_size, token_emb_size, token_vecs):
+        self.char_embs = nn.Embedding(num_chars, char_emb_size)
+        self.tok_embs = nn.Embedding(voc_size, token_emb_size)
+
+        nn.init.kaiming_uniform_(self.char_embs.weight)
+        self.tok_embs.load_state_dict({"weight": token_vecs})
+
+    def loss(self, emissions, labels):
+        return - self.crf(emissions, labels)
+
+    def decode(self, emissions):
+        return self.crf.decode(emissions)
+
+
+class OnlyCRF(nn.Module):
+    """
+    Subnet of CNNbLSTMCRF
+    """
+    def __init__(self, char_to_idx, tok_to_idx, tag_to_idx, token_vecs, char_emb_size=30, char_repr_size=30, 
+                 token_emb_size=100, lstm_hidden_size=200, max_word_len=20, sent_len=10, dropout_rate=0.5):
+        super(OnlyCRF, self).__init__()
+
+        self.init_embeddings(len(char_to_idx), char_emb_size, len(tok_to_idx), token_emb_size, token_vecs)
+
+        self.embs2emissions = nn.Linear(token_emb_size, len(tag_to_idx))
+        nn.init.xavier_uniform_(self.embs2emissions.weight)
+        nn.init.zeros_(self.embs2emissions.bias)
+
+        self.crf = CRF(len(tag_to_idx), batch_first=True)
+
+    def forward(self, chars, toks):
+        """
+        chars: (batch_size, num_chars) 
+        toks: (batch_size)
+        """
+        x = self.tok_embs(toks)
+        x = torch.unsqueeze(x, 0)
+
+        x = self.embs2emissions(x)
 
         return x
 

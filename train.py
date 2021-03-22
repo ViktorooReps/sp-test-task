@@ -1,6 +1,6 @@
 from utils.memory_management import limit_memory, load_obj, save_obj
 from utils.plotter import plot_mini
-from model.nerc import CNNbLSTMCRF, CNNCRF, Data, collate_fn
+from model.nerc import CNNbLSTMCRF, CNNCRF, bLSTMCRF, OnlyCRF, Data, collate_fn
 
 from math import sqrt
 from torch.utils.data import DataLoader
@@ -37,7 +37,7 @@ if __name__ == '__main__':
     limit_memory(7 * 1024 * 1024 * 1024)
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("part", choices=["full", "CNN", "LSTM"], default="full")
+    parser.add_argument("part", choices=["full", "CNN", "LSTM", "CRF"], default="full")
     parser.add_argument("--mini", action='store_true')
 
     args = parser.parse_args()
@@ -74,7 +74,11 @@ if __name__ == '__main__':
 
     if args.part == "LSTM":
         print("Initializing bLSTMCRF")
-        model = CNNCRF(char_to_idx, tok_to_idx, tag_to_idx, token_vecs)
+        model = bLSTMCRF(char_to_idx, tok_to_idx, tag_to_idx, token_vecs)
+
+    if args.part == "CRF":
+        print("Initializing CRF")
+        model = OnlyCRF(char_to_idx, tok_to_idx, tag_to_idx, token_vecs)
 
     print("Trainable weights:")
     for name, param in model.named_parameters():
