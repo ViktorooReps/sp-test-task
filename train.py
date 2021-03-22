@@ -1,5 +1,6 @@
 from utils.memory_management import limit_memory, load_obj, save_obj
-from model.nerc import CNNbLSTMCRF, Data, collate_fn
+from utils.plotter import plot_mini
+from model.nerc import CNNbLSTMCRF, CNNCRF, Data, collate_fn
 
 from math import sqrt
 from torch.utils.data import DataLoader
@@ -8,9 +9,9 @@ from torch.nn.utils import clip_grad_norm_
 from model.hyperparams import *
 from evaluate import evaluate_model
 
+import argparse
 import torch
 import torch.optim as optim
-import time
 import datetime
 
 def train_epoch(model, dataloader, scheduler, optimizer):
@@ -35,6 +36,12 @@ def train_epoch(model, dataloader, scheduler, optimizer):
 if __name__ == '__main__':
     limit_memory(7 * 1024 * 1024 * 1024)
 
+    parser = argparse.ArgumentParser()
+    parser.add_argument("part", choices=["full", "CNN", "LSTM"], default="full")
+    parser.add_argument("--mini", action='store_true')
+
+    args = parser.parse_args()
+
     char_to_idx = load_obj("char_to_idx")
     tag_to_idx = load_obj("tag_to_idx")
     tok_to_idx = load_obj("tok_to_idx")
@@ -57,14 +64,32 @@ if __name__ == '__main__':
 
     token_vecs = torch.cat(token_vecs, dim=0)
 
-    model = CNNbLSTMCRF(char_to_idx, tok_to_idx, tag_to_idx, token_vecs, 
-        dropout_rate=dropout_rate)
+    if args.part == "full":
+        print("Initializing CNNbLSTMCRF")
+        model = CNNbLSTMCRF(char_to_idx, tok_to_idx, tag_to_idx, token_vecs)
+
+    if args.part == "CNN":
+        print("Initializing CNNCRF")
+        model = CNNCRF(char_to_idx, tok_to_idx, tag_to_idx, token_vecs)
+
+    if args.part == "LSTM":
+        print("Initializing bLSTMCRF")
+        model = CNNCRF(char_to_idx, tok_to_idx, tag_to_idx, token_vecs)
 
     print("Trainable weights:")
     for name, param in model.named_parameters():
         if param.requires_grad:
             print(name, param.data.shape)
             #print(name, param.data)
+    
+    lr_lambda = lambda x: 1 / (1 + decay_rate * x)
+    optimizer = optim.SGD(model.parameters(), lr=initial_lr, momentum=momentum)
+    scheduler = optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lr_lambda)
+
+    mini_tokens = load_obj("mini_tokens")
+    mini_labels = load_obj("mini_labels")
+    mini_data = Data(mini_tokens, mini_labels, 
+        tok_to_idx, char_to_idx, tag_to_idx, max_token_len=max_word_len)
 
     train_tokens = load_obj("train_tokens")
     train_labels = load_obj("train_labels")
@@ -76,12 +101,20 @@ if __name__ == '__main__':
     val_data = Data(val_tokens, val_labels, 
         tok_to_idx, char_to_idx, tag_to_idx, max_token_len=max_word_len)
 
+    mini_dataloader = DataLoader(
+        mini_data, batch_size, 
+        shuffle=False, 
+        collate_fn=collate_fn, 
+        drop_last=True
+    )
+
     train_dataloader = DataLoader(
         train_data, batch_size, 
         shuffle=False, 
         collate_fn=collate_fn, 
         drop_last=True
     )
+
     val_dataloader = DataLoader(
         val_data, batch_size, 
         shuffle=False, 
@@ -89,37 +122,24 @@ if __name__ == '__main__':
         drop_last=True
     )
 
-    lr_lambda = lambda x: 1 / (1 + decay_rate * x)
-    optimizer = optim.SGD(model.parameters(), lr=initial_lr, momentum=momentum)
-    scheduler = optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lr_lambda)
-
     train_loss_list = []
     val_loss_list = []
 
     train_f1_list = []
     val_f1_list = []
 
-    train_loss, train_f1 = evaluate_model(model, train_dataloader)
-    val_loss, val_f1 = evaluate_model(model, val_dataloader)
+    mini_loss_list = []
+    mini_f1_list = []
 
-    train_loss_list.append(train_loss)
-    val_loss_list.append(val_loss)
+    print("\nPre train results:")
+    if args.mini:
+        mini_loss, mini_f1 = evaluate_model(model, mini_dataloader)
 
-    train_f1_list.append(train_f1)
-    val_f1_list.append(val_f1)
+        mini_loss_list.append(mini_loss)
+        mini_f1_list.append(mini_f1)
 
-    print("\nBefore training:")
-    print("[train] loss: " + str(train_loss) + " F1: " + str(train_f1))
-    print("[valid] loss: " + str(val_loss) + " F1: " + str(val_f1))
-    print("learning rate: " + str(scheduler.get_last_lr()))
-
-    print("\nTraining start")
-    print(datetime.datetime.now())
-
-    for epoch in range(epochs):
-        print("\nTraining epoch " + str(epoch))
-        train_epoch(model, train_dataloader, scheduler, optimizer)
-
+        print("[mini] loss: " + str(mini_loss) + " F1: " + str(mini_f1))
+    else:
         train_loss, train_f1 = evaluate_model(model, train_dataloader)
         val_loss, val_f1 = evaluate_model(model, val_dataloader)
 
@@ -131,12 +151,47 @@ if __name__ == '__main__':
 
         print("[train] loss: " + str(train_loss) + " F1: " + str(train_f1))
         print("[valid] loss: " + str(val_loss) + " F1: " + str(val_f1))
-        print("learning rate: " + str(scheduler.get_last_lr()))
+        
+    print("\nTraining start")
+    print(datetime.datetime.now())
 
-    save_obj(train_loss_list, "train_loss_list")
-    save_obj(val_loss_list, "val_loss_list")
+    for epoch in range(epochs):
+        print("\nTraining epoch " + str(epoch))
 
-    save_obj(train_f1_list, "train_f1_list")
-    save_obj(val_f1_list, "val_f1_list")
+        if args.mini:
+            train_epoch(model, mini_dataloader, scheduler, optimizer)
 
-    save_obj(model, "model")
+            mini_loss, mini_f1 = evaluate_model(model, mini_dataloader)
+
+            mini_loss_list.append(mini_loss)
+            mini_f1_list.append(mini_f1)
+
+            print("[mini] loss: " + str(mini_loss) + " F1: " + str(mini_f1))
+        else:
+            train_epoch(model, train_dataloader, scheduler, optimizer)
+
+            train_loss, train_f1 = evaluate_model(model, train_dataloader)
+            val_loss, val_f1 = evaluate_model(model, val_dataloader)
+
+            train_loss_list.append(train_loss)
+            val_loss_list.append(val_loss)
+
+            train_f1_list.append(train_f1)
+            val_f1_list.append(val_f1)
+
+            print("[train] loss: " + str(train_loss) + " F1: " + str(train_f1))
+            print("[valid] loss: " + str(val_loss) + " F1: " + str(val_f1))
+
+    if args.mini:
+        save_obj(mini_loss_list, "mini_loss_list")
+        save_obj(mini_f1_list, "mini_f1_list")
+
+        plot_mini()
+    else:
+        save_obj(train_loss_list, "train_loss_list")
+        save_obj(val_loss_list, "val_loss_list")
+
+        save_obj(train_f1_list, "train_f1_list")
+        save_obj(val_f1_list, "val_f1_list")
+
+        save_obj(model, "model")

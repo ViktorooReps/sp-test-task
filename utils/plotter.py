@@ -53,5 +53,27 @@ def plot_last_run():
 
     plt.savefig("plots/valid.png")
 
+def plot_mini():
+    mini_losses = load_obj("mini_loss_list")
+    mini_f1s = load_obj("mini_f1_list")
+
+    plt.figure(1)
+
+    plt.subplot(121)
+    plt.ylabel("Loss")
+    plt.title("Loss on mini set")
+    plt.xlabel("Epochs")
+    plt.plot(mini_losses)
+
+    plt.subplot(122)
+    plt.ylabel("F1")
+    plt.title("F1 on mini set")
+    plt.xlabel("Epochs")
+    plt.plot(mini_f1s)
+
+    plt.tight_layout()
+
+    plt.savefig("plots/mini.png")
+
 if __name__ == "__main__":
     plot_last_run()
