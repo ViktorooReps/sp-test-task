@@ -14,9 +14,15 @@ pip install -r requirements.txt
 ```
 
 ## 3. Обучение модели:
+На всем датасете:
 ```bash
-python train.py
+python train.py full
 ```
+На маленькой части:
+```bash
+python train.py full --mini
+```
+Также вместо `full` можно поставить `LSTM`, чтобы обучить bLSTMCRF модель или `CNN`, чтобы обучить CNNCRF.
 
 ## 4. Оценка модели:
 ```bash
