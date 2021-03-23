@@ -20,4 +20,6 @@ token_emb_size = 100
 
 word_emb_size = 30
 
+padding = "left" # right or center
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

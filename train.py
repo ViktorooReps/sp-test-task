@@ -93,17 +93,17 @@ if __name__ == '__main__':
     mini_tokens = load_obj("mini_tokens")
     mini_labels = load_obj("mini_labels")
     mini_data = Data(mini_tokens, mini_labels, 
-        tok_to_idx, char_to_idx, tag_to_idx, max_token_len=max_word_len)
+        tok_to_idx, char_to_idx, tag_to_idx, max_token_len=max_word_len, padding=padding)
 
     train_tokens = load_obj("train_tokens")
     train_labels = load_obj("train_labels")
     train_data = Data(train_tokens, train_labels, 
-        tok_to_idx, char_to_idx, tag_to_idx, max_token_len=max_word_len)
+        tok_to_idx, char_to_idx, tag_to_idx, max_token_len=max_word_len, padding=padding)
 
     val_tokens = load_obj("val_tokens")
     val_labels = load_obj("val_labels")
     val_data = Data(val_tokens, val_labels, 
-        tok_to_idx, char_to_idx, tag_to_idx, max_token_len=max_word_len)
+        tok_to_idx, char_to_idx, tag_to_idx, max_token_len=max_word_len, padding=padding)
 
     mini_dataloader = DataLoader(
         mini_data, batch_size, 

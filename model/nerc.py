@@ -15,7 +15,7 @@ def collate_fn(batch):
 
 class Data(Dataset):
 
-    def __init__(self, X, y, tok_to_idx, char_to_idx, tag_to_idx, aug=False, max_token_len=20):
+    def __init__(self, X, y, tok_to_idx, char_to_idx, tag_to_idx, aug=False, max_token_len=20, padding="left"):
         self.X = X 
         self.y = y
         self.aug = aug
@@ -23,6 +23,7 @@ class Data(Dataset):
         self.char_to_idx = char_to_idx
         self.tag_to_idx = tag_to_idx
         self.max_token_len = max_token_len
+        self.padding = padding
 
     def __len__(self):
         return len(self.y)
@@ -35,8 +36,18 @@ class Data(Dataset):
 
         pad_idx = self.char_to_idx["<pad>"]
         num_pads = self.max_token_len - len(char_idxs)
-        left_pads = num_pads // 2
-        right_pads = num_pads // 2 + num_pads % 2
+
+        if self.padding == "center":
+            left_pads = num_pads // 2
+            right_pads = num_pads // 2 + num_pads % 2
+
+        if self.padding == "left":
+            left_pads = 0
+            right_pads = num_pads
+
+        if self.padding == "left":
+            left_pads = num_pads
+            right_pads = 0
 
         char_idxs = [pad_idx] * left_pads + char_idxs + [pad_idx] * right_pads
 
@@ -54,7 +65,7 @@ class CNNbLSTMCRF(nn.Module):
      \/
     (batch_size, char_repr_size, 1, 1)
     """
-    def __init__(self, char_to_idx, tok_to_idx, tag_to_idx, token_vecs, char_emb_size=30, char_repr_size=30, 
+    def __init__(self, char_to_idx, tok_to_idx, tag_to_idx, token_vecs, char_emb_size=30, char_repr_size=60, 
                  token_emb_size=100, lstm_hidden_size=200, max_word_len=20, sent_len=10, dropout_rate=0.5):
         super(CNNbLSTMCRF, self).__init__()
 
