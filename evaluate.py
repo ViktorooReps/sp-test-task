@@ -28,7 +28,11 @@ def evaluate_model(model, dataloader):
             total_loss += loss
             total_batches += 1
 
-            predicted_labels += model.decode(emissions)[0]
+            try:
+                predicted_labels += model.decode(emissions)[0]
+            except Exception:
+                predicted_labels += model.decode(emissions).tolist()
+
             labels += lbls.detach().tolist()
 
         final_loss = total_loss / total_batches
