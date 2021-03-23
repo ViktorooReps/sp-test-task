@@ -64,6 +64,21 @@ class CNNbLSTMCRF(nn.Module):
      || max pooling
      \/
     (batch_size, char_repr_size, 1, 1)
+
+    LSTM:
+    (batch_size, char_repr_size + token_emb_size)
+     ||  
+     \/
+    (batch_size, 2 * hidden_size)
+
+    CRF:
+    (batch_size, 2 * hidden_size)
+     || linear 
+     \/
+    (batch_size, num_tags)
+     || CRF
+     \/
+    (batch_size)
     """
     def __init__(self, char_to_idx, tok_to_idx, tag_to_idx, token_vecs, char_emb_size=30, char_repr_size=60, 
                  token_emb_size=100, lstm_hidden_size=200, max_word_len=20, sent_len=10, dropout_rate=0.5):

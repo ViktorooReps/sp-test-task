@@ -39,6 +39,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("part", choices=["full", "CNN", "LSTM", "CRF"], default="full")
     parser.add_argument("--mini", action='store_true')
+    parser.add_argument("--info", action='store_true')
 
     args = parser.parse_args()
 
@@ -83,7 +84,7 @@ if __name__ == '__main__':
     print("Trainable weights:")
     for name, param in model.named_parameters():
         if param.requires_grad:
-            print(name, param.data.shape)
+            print(name, param.data.shape, "norm:", torch.linalg.norm(param.data).item())
             #print(name, param.data)
     
     lr_lambda = lambda x: 1 / (1 + decay_rate * x)
@@ -185,6 +186,12 @@ if __name__ == '__main__':
 
             print("[train] loss: " + str(train_loss) + " F1: " + str(train_f1))
             print("[valid] loss: " + str(val_loss) + " F1: " + str(val_f1))
+        
+        if args.info:
+            for name, param in model.named_parameters():
+                if param.requires_grad:
+                    print(name, "norm:", torch.linalg.norm(param.data).item())
+
 
     if args.mini:
         save_obj(mini_loss_list, "mini_loss_list")
