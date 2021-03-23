@@ -81,7 +81,8 @@ class CNNbLSTMCRF(nn.Module):
     (batch_size)
     """
     def __init__(self, char_to_idx, tok_to_idx, tag_to_idx, token_vecs, char_emb_size=30, char_repr_size=60, 
-                 token_emb_size=100, lstm_hidden_size=200, max_word_len=20, sent_len=10, dropout_rate=0.5):
+                 token_emb_size=100, lstm_hidden_size=200, max_word_len=20, sent_len=10, dropout_rate=0.5, 
+                 break_simmetry=True):
         super(CNNbLSTMCRF, self).__init__()
 
         self.init_embeddings(len(char_to_idx), char_emb_size, len(tok_to_idx), token_emb_size, token_vecs)
@@ -102,7 +103,10 @@ class CNNbLSTMCRF(nn.Module):
         for names in self.lstm._all_weights:
             for name in filter(lambda n: "bias" in n,  names):
                 bias = getattr(self.lstm, name)
-                nn.init.zeros_(bias)
+                if not break_simmetry:
+                    nn.init.zeros_(bias)
+                else:
+                    torch.nn.init.sparse_(bias.reshape(bias.size()[0], 1), sparsity=0.5)
 
                 # setting forget gates biases to 1.0
                 n = bias.size(0)

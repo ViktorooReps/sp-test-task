@@ -22,4 +22,6 @@ word_emb_size = 30
 
 padding = "left" # right or center
 
+break_simmetry = True
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
