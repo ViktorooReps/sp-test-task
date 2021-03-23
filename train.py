@@ -84,7 +84,7 @@ if __name__ == '__main__':
     print("Trainable weights:")
     for name, param in model.named_parameters():
         if param.requires_grad:
-            print(name, param.data.shape, "norm:", torch.linalg.norm(param.data).item())
+            print(name, param.data.shape, "norm:", torch.norm(param.data).item())
             #print(name, param.data)
     
     lr_lambda = lambda x: 1 / (1 + decay_rate * x)
@@ -190,7 +190,7 @@ if __name__ == '__main__':
         if args.info:
             for name, param in model.named_parameters():
                 if param.requires_grad:
-                    print(name, "norm:", torch.linalg.norm(param.data).item())
+                    print(name, "norm:", torch.norm(param.data).item())
 
 
     if args.mini:
