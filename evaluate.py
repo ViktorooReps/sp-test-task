@@ -5,8 +5,59 @@ from utils.plotter import plot_last_run
 
 from sklearn.metrics import f1_score
 from torch.utils.data import DataLoader
+from pprint import pprint 
 
 import matplotlib.pyplot as plt
+
+def score(labels, preds, idx_to_tag, excluded_tags={"O"}):
+    tag_to_oh_preds = dict()
+    tag_to_oh_lbls = dict()
+
+    for val in idx_to_tag.values():
+        tag_to_oh_preds[val] = []
+        tag_to_oh_lbls[val] = []
+
+    for pred in preds:
+        for val in idx_to_tag.values():
+            tag_to_oh_preds[val].append(1 if val == idx_to_tag[pred] else 0)
+
+    for lbl in labels:
+        for val in idx_to_tag.values():
+            tag_to_oh_lbls[val].append(1 if val == idx_to_tag[lbl] else 0)
+
+    tag_to_oh_preds = { val : torch.tensor(lst, requires_grad=False) 
+        for val, lst in tag_to_oh_preds.items() }
+
+    tag_to_oh_lbls = { val : torch.tensor(lst, requires_grad=False) 
+        for val, lst in tag_to_oh_lbls.items() }
+
+    TP = lambda lbl, prds: torch.sum(lbl * prds)
+    FP = lambda lbl, prds: torch.sum((lbl == 0) * prds)
+    FN = lambda lbl, prds: torch.sum(lbl * (prds == 0))
+
+    tag_to_cnts = {
+        val : {
+            "TP" : TP(tag_to_oh_lbls[val], tag_to_oh_preds[val]),
+            "FP" : FP(tag_to_oh_lbls[val], tag_to_oh_preds[val]),
+            "FN" : FN(tag_to_oh_lbls[val], tag_to_oh_preds[val])
+        } for val in idx_to_tag.values()
+    }
+
+    tag_to_score = {
+        val : {
+            "precision" : (tag_to_cnts[val]["TP"] / 
+                (tag_to_cnts[val]["TP"] + tag_to_cnts[val]["FP"])).item(),
+            "recall"    : (tag_to_cnts[val]["TP"] /
+                (tag_to_cnts[val]["TP"] + tag_to_cnts[val]["FN"])).item(),
+            "f1"        : (tag_to_cnts[val]["TP"] / 
+                (tag_to_cnts[val]["TP"] + (tag_to_cnts[val]["FP"] + tag_to_cnts[val]["FN"]) / 2)).item()
+        } for val in idx_to_tag.values()
+    }
+
+    f1 = sum(tag_to_score[val]["f1"] if val not in excluded_tags else 0 
+        for val in idx_to_tag.values()) / (len(idx_to_tag) - 1)
+
+    return f1, tag_to_score
 
 def evaluate_model(model, dataloader):
     model.eval()
@@ -36,7 +87,11 @@ def evaluate_model(model, dataloader):
             labels += lbls.detach().tolist()
 
         final_loss = total_loss / total_batches
-        f1 = f1_score(labels, predicted_labels, average="micro")
+        #f1 = f1_score(labels, predicted_labels, average="micro")
+
+        idx_to_tag = load_obj("idx_to_tag")
+        f1, tag_to_score = score(labels, predicted_labels, idx_to_tag)
+        pprint(tag_to_score)
 
     return (final_loss, f1)
 
