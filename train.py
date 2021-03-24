@@ -3,6 +3,7 @@ from utils.plotter import plot_mini
 from model.nerc import CNNbLSTMCRF, CNNCRF, bLSTMCRF, OnlyCRF, CNNbLSTMSoftmax, Data, collate_fn
 from extract import preprocess
 
+from pprint import pprint
 from math import sqrt
 from torch.utils.data import DataLoader
 from torch.nn.utils import clip_grad_norm_
@@ -146,15 +147,15 @@ if __name__ == '__main__':
 
     print("\nPre train results:")
     if args.mini:
-        mini_loss, mini_f1 = evaluate_model(model, mini_dataloader)
+        mini_loss, mini_f1, _ = evaluate_model(model, mini_dataloader)
 
         mini_loss_list.append(mini_loss)
         mini_f1_list.append(mini_f1)
 
         print("[mini] loss: " + str(mini_loss) + " F1: " + str(mini_f1))
     else:
-        train_loss, train_f1 = evaluate_model(model, train_dataloader)
-        val_loss, val_f1 = evaluate_model(model, val_dataloader)
+        train_loss, train_f1, train_tag_to_score = evaluate_model(model, train_dataloader)
+        val_loss, val_f1, val_tag_to_score = evaluate_model(model, val_dataloader)
 
         train_loss_list.append(train_loss)
         val_loss_list.append(val_loss)
@@ -174,17 +175,19 @@ if __name__ == '__main__':
         if args.mini:
             train_epoch(model, mini_dataloader, scheduler, optimizer)
 
-            mini_loss, mini_f1 = evaluate_model(model, mini_dataloader)
+            mini_loss, mini_f1, mini_tag_to_score = evaluate_model(model, mini_dataloader)
 
             mini_loss_list.append(mini_loss)
             mini_f1_list.append(mini_f1)
 
             print("[mini] loss: " + str(mini_loss) + " F1: " + str(mini_f1))
+            print("[mini] tag to score:")
+            pprint(mini_tag_to_score)
         else:
             train_epoch(model, train_dataloader, scheduler, optimizer)
 
-            train_loss, train_f1 = evaluate_model(model, train_dataloader)
-            val_loss, val_f1 = evaluate_model(model, val_dataloader)
+            train_loss, train_f1, train_tag_to_score = evaluate_model(model, train_dataloader)
+            val_loss, val_f1, val_tag_to_score = evaluate_model(model, val_dataloader)
 
             train_loss_list.append(train_loss)
             val_loss_list.append(val_loss)
@@ -193,7 +196,11 @@ if __name__ == '__main__':
             val_f1_list.append(val_f1)
 
             print("[train] loss: " + str(train_loss) + " F1: " + str(train_f1))
+            print("[train] tag to score:")
+            pprint(train_tag_to_score)
             print("[valid] loss: " + str(val_loss) + " F1: " + str(val_f1))
+            print("[valid] tag to score:")
+            pprint(val_tag_to_score)
         
         if args.info:
             for name, param in model.named_parameters():

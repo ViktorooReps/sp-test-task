@@ -2,8 +2,8 @@ from model.hyperparams import *
 from model.nerc import Data, collate_fn
 from utils.memory_management import load_obj, save_obj
 from utils.plotter import plot_last_run
+from extract import preprocess
 
-from sklearn.metrics import f1_score
 from torch.utils.data import DataLoader
 from pprint import pprint 
 
@@ -89,13 +89,11 @@ def evaluate_model(model, dataloader):
             labels += lbls.detach().tolist()
 
         final_loss = total_loss / total_batches
-        #f1 = f1_score(labels, predicted_labels, average="micro")
 
         idx_to_tag = load_obj("idx_to_tag")
         f1, tag_to_score = score(labels, predicted_labels, idx_to_tag)
-        pprint(tag_to_score)
 
-    return (final_loss, f1)
+    return (final_loss, f1, tag_to_score)
 
 if __name__ == '__main__':
     char_to_idx = load_obj("char_to_idx")
@@ -108,7 +106,8 @@ if __name__ == '__main__':
     test_labels = load_obj("test_labels")
 
     test_data = Data(test_tokens, test_labels, 
-        tok_to_idx, char_to_idx, tag_to_idx, max_token_len=max_word_len)
+        tok_to_idx, char_to_idx, tag_to_idx, max_token_len=max_word_len,
+        padding=padding, preprocessor=preprocess)
 
     test_dataloader = DataLoader(
         test_data, batch_size, 
@@ -121,7 +120,8 @@ if __name__ == '__main__':
     train_labels = load_obj("train_labels")
 
     train_data = Data(train_tokens, train_labels, 
-        tok_to_idx, char_to_idx, tag_to_idx, max_token_len=max_word_len)
+        tok_to_idx, char_to_idx, tag_to_idx, max_token_len=max_word_len,
+        padding=padding, preprocessor=preprocess)
 
     train_dataloader = DataLoader(
         train_data, batch_size, 
@@ -134,7 +134,8 @@ if __name__ == '__main__':
     val_labels = load_obj("val_labels")
 
     val_data = Data(val_tokens, val_labels, 
-        tok_to_idx, char_to_idx, tag_to_idx, max_token_len=max_word_len)
+        tok_to_idx, char_to_idx, tag_to_idx, max_token_len=max_word_len,
+        padding=padding, preprocessor=preprocess)
 
     val_dataloader = DataLoader(
         val_data, batch_size, 
@@ -144,14 +145,20 @@ if __name__ == '__main__':
     )
 
     print("\nEvaluating on test set")
-    test_loss, test_f1 = evaluate_model(model, test_dataloader)
+    test_loss, test_f1, test_tag_to_score = evaluate_model(model, test_dataloader)
     print("Evaluating on train set")
-    train_loss, train_f1 = evaluate_model(model, train_dataloader)
+    train_loss, train_f1, train_tag_to_score = evaluate_model(model, train_dataloader)
     print("Evaluating on valid set")
-    val_loss, val_f1 = evaluate_model(model, val_dataloader)
+    val_loss, val_f1, valid_tag_to_score = evaluate_model(model, val_dataloader)
 
     print("\n[test]  loss: " + str(test_loss) + " F1: " + str(test_f1))
+    print("[test] tag to score:")
+    pprint(test_tag_to_score)
     print("[train] loss: " + str(train_loss) + " F1: " + str(train_f1))
+    print("[train] tag to score:")
+    pprint(train_tag_to_score)
     print("[valid] loss: " + str(val_loss) + " F1: " + str(val_f1))
+    print("[valid] tag to score:")
+    pprint(valid_tag_to_score)
 
     plot_last_run()
