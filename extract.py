@@ -8,18 +8,19 @@ import re
 from model.hyperparams import max_word_len
 from utils.memory_management import limit_memory, load_obj, save_obj
 
-def preprocess(raw_token):
-    raw_token = str(raw_token)
-    
-    if len(raw_token) > max_word_len:
-        new_token = max(re.split('\W+', raw_token), key=lambda x: len(x))
-    else:
-        new_token = raw_token
-    
-    if new_token == "":
-        new_token = raw_token[:max_word_len]
+def preprocess(token):
+    return str(resize(token)).lower()
 
-    return str(new_token).lower()
+def resize(token):
+    token = str(token)
+    if len(token) > max_word_len:
+        new_token = max(re.split('\W+', token), key=lambda x: len(x))
+        if new_token == "":
+            new_token = token[:max_word_len]
+
+        return new_token
+    else:
+        return token
 
 def unpack(filenames):
     token_voc = set()
@@ -51,7 +52,7 @@ def get_labeled_tokens(filename):
     tokens = []
     for token in df["-TOKEN-"]:
         if len(str(token)) > 0 and token != "":
-            tokens.append(preprocess(token))
+            tokens.append(resize(token))
     
     labels = []
     for label in df["-NETAG-"]:

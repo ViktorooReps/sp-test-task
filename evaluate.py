@@ -8,6 +8,7 @@ from torch.utils.data import DataLoader
 from pprint import pprint 
 
 import matplotlib.pyplot as plt
+import numpy as np
 
 def score(labels, preds, idx_to_tag, excluded_tags={"O"}):
     tag_to_oh_preds = dict()
@@ -31,9 +32,9 @@ def score(labels, preds, idx_to_tag, excluded_tags={"O"}):
     tag_to_oh_lbls = { val : torch.tensor(lst, requires_grad=False) 
         for val, lst in tag_to_oh_lbls.items() }
 
-    TP = lambda lbl, prds: torch.sum(lbl * prds)
-    FP = lambda lbl, prds: torch.sum((lbl == 0) * prds)
-    FN = lambda lbl, prds: torch.sum(lbl * (prds == 0))
+    TP = lambda lbl, prds: torch.sum(lbl * prds).item()
+    FP = lambda lbl, prds: torch.sum((lbl == 0) * prds).item()
+    FN = lambda lbl, prds: torch.sum(lbl * (prds == 0)).item()
 
     tag_to_cnts = {
         val : {
@@ -43,16 +44,17 @@ def score(labels, preds, idx_to_tag, excluded_tags={"O"}):
         } for val in idx_to_tag.values()
     }
 
-    tag_to_score = {
-        val : {
-            "precision" : (tag_to_cnts[val]["TP"] / 
-                (tag_to_cnts[val]["TP"] + tag_to_cnts[val]["FP"])).item(),
-            "recall"    : (tag_to_cnts[val]["TP"] /
-                (tag_to_cnts[val]["TP"] + tag_to_cnts[val]["FN"])).item(),
-            "f1"        : (tag_to_cnts[val]["TP"] / 
-                (tag_to_cnts[val]["TP"] + (tag_to_cnts[val]["FP"] + tag_to_cnts[val]["FN"]) / 2)).item()
-        } for val in idx_to_tag.values()
-    }
+    with np.errstate(divide='ignore', invalid='ignore'):
+        tag_to_score = {
+            val : {
+                "precision" : np.true_divide(tag_to_cnts[val]["TP"],
+                    (tag_to_cnts[val]["TP"] + tag_to_cnts[val]["FP"])),
+                "recall"    : np.true_divide(tag_to_cnts[val]["TP"],
+                    (tag_to_cnts[val]["TP"] + tag_to_cnts[val]["FN"])),
+                "f1"        : np.true_divide(tag_to_cnts[val]["TP"], 
+                    (tag_to_cnts[val]["TP"] + (tag_to_cnts[val]["FP"] + tag_to_cnts[val]["FN"]) / 2))
+            } for val in idx_to_tag.values()
+        }
 
     f1 = sum(tag_to_score[val]["f1"] if val not in excluded_tags else 0 
         for val in idx_to_tag.values()) / (len(idx_to_tag) - 1)

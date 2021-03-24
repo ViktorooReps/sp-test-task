@@ -15,7 +15,8 @@ def collate_fn(batch):
 
 class Data(Dataset):
 
-    def __init__(self, X, y, tok_to_idx, char_to_idx, tag_to_idx, aug=False, max_token_len=20, padding="left"):
+    def __init__(self, X, y, tok_to_idx, char_to_idx, tag_to_idx, aug=False, 
+        max_token_len=20, padding="left", preprocessor=None):
         self.X = X 
         self.y = y
         self.aug = aug
@@ -24,15 +25,20 @@ class Data(Dataset):
         self.tag_to_idx = tag_to_idx
         self.max_token_len = max_token_len
         self.padding = padding
+        if preprocessor == None:
+            self.preprocessor = lambda x : x
+        else:
+            self.preprocessor = preprocessor
 
     def __len__(self):
         return len(self.y)
 
     def __getitem__(self, idx):
-        token = self.X[idx]
+        raw_token = self.X[idx]
+        token = self.preprocessor(raw_token)
         tok_idx = self.tok_to_idx[token]
         lbl_idx = self.tag_to_idx[self.y[idx]]
-        char_idxs = [self.char_to_idx[char] for char in token]
+        char_idxs = [self.char_to_idx[char] for char in raw_token]
 
         pad_idx = self.char_to_idx["<pad>"]
         num_pads = self.max_token_len - len(char_idxs)
