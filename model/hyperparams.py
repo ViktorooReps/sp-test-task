@@ -8,9 +8,9 @@ batch_size = 10
 
 epochs = 50 # default: 50
 
-initial_lr = 0.05 # default: 0.015
+initial_lr = 0.005 # default: 0.015
 
-decay_rate = 0.2
+decay_rate = 0.1
 
 momentum = 0.9
 
