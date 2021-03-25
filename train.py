@@ -42,6 +42,7 @@ if __name__ == '__main__':
     parser.add_argument("part", choices=["full", "CNN", "LSTM", "CRF", "softmax"], default="full")
     parser.add_argument("--mini", action='store_true')
     parser.add_argument("--info", action='store_true')
+    parser.add_argument("--scores", action='store_true')
 
     args = parser.parse_args()
 
@@ -181,8 +182,9 @@ if __name__ == '__main__':
             mini_f1_list.append(mini_f1)
 
             print("[mini] loss: " + str(mini_loss) + " F1: " + str(mini_f1))
-            print("[mini] tag to score:")
-            pprint(mini_tag_to_score)
+            if args.scores:
+                print("[mini] tag to score:")
+                pprint(mini_tag_to_score)
         else:
             train_epoch(model, train_dataloader, scheduler, optimizer)
 
@@ -196,11 +198,13 @@ if __name__ == '__main__':
             val_f1_list.append(val_f1)
 
             print("[train] loss: " + str(train_loss) + " F1: " + str(train_f1))
-            print("[train] tag to score:")
-            pprint(train_tag_to_score)
+            if args.scores:
+                print("[train] tag to score:")
+                pprint(train_tag_to_score)
             print("[valid] loss: " + str(val_loss) + " F1: " + str(val_f1))
-            print("[valid] tag to score:")
-            pprint(val_tag_to_score)
+            if args.scores:
+                print("[valid] tag to score:")
+                pprint(val_tag_to_score)
         
         if args.info:
             for name, param in model.named_parameters():
