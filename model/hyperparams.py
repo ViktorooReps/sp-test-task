@@ -10,7 +10,7 @@ epochs = 50 # default: 50
 
 initial_lr = 0.05 # default: 0.015
 
-decay_rate = 0.3
+decay_rate = 0.4
 
 momentum = 0.9
 
