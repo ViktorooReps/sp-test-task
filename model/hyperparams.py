@@ -6,7 +6,7 @@ max_word_len = 20
 
 batch_size = 10
 
-epochs = 50
+epochs = 100 # default: 50
 
 initial_lr = 0.015
 
