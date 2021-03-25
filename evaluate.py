@@ -76,17 +76,14 @@ def evaluate_model(model, dataloader):
             lbls = lbls.to(device)
 
             emissions = model(chars, toks).to(device)
-            loss = model.loss(emissions, lbls.reshape(1, batch_size)).item()
+            loss = model.loss(emissions, lbls).item()
 
             total_loss += loss
             total_batches += 1
 
-            try:
-                predicted_labels += model.decode(emissions)[0]
-            except Exception:
-                predicted_labels += model.decode(emissions).tolist()
+            predicted_labels += sum(model.decode(emissions), [])
 
-            labels += lbls.detach().tolist()
+            labels += sum(lbls.detach().tolist(), [])
 
         final_loss = total_loss / total_batches
 

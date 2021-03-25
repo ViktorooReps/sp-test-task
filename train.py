@@ -1,11 +1,11 @@
 from utils.memory_management import limit_memory, load_obj, save_obj
 from utils.plotter import plot_mini
-from model.nerc import CNNbLSTMCRF, CNNCRF, bLSTMCRF, OnlyCRF, CNNbLSTMSoftmax, Data, collate_fn
+from model.nerc import *
 from extract import preprocess
 
 from pprint import pprint
 from math import sqrt
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, BatchSampler, SequentialSampler
 from torch.nn.utils import clip_grad_norm_
 
 from model.hyperparams import *
@@ -16,6 +16,7 @@ import torch
 import torch.optim as optim
 import datetime
 
+
 def train_epoch(model, dataloader, scheduler, optimizer):
     model.train()
     for batch_idx, (chars, toks, lbls) in enumerate(dataloader):
@@ -24,7 +25,7 @@ def train_epoch(model, dataloader, scheduler, optimizer):
         lbls = lbls.to(device)
 
         emissions = model(chars, toks).to(device)
-        loss = model.loss(emissions, lbls.reshape(1, batch_size))
+        loss = model.loss(emissions, lbls)
 
         loss.backward()
 
@@ -116,27 +117,6 @@ if __name__ == '__main__':
         tok_to_idx, char_to_idx, tag_to_idx, max_token_len=max_word_len, 
         padding=padding, preprocessor=preprocess)
 
-    mini_dataloader = DataLoader(
-        mini_data, batch_size, 
-        shuffle=False, 
-        collate_fn=collate_fn, 
-        drop_last=True
-    )
-
-    train_dataloader = DataLoader(
-        train_data, batch_size, 
-        shuffle=False, 
-        collate_fn=collate_fn, 
-        drop_last=True
-    )
-
-    val_dataloader = DataLoader(
-        val_data, batch_size, 
-        shuffle=False, 
-        collate_fn=collate_fn, 
-        drop_last=True
-    )
-
     train_loss_list = []
     val_loss_list = []
 
@@ -148,15 +128,24 @@ if __name__ == '__main__':
 
     print("\nPre train results:")
     if args.mini:
-        mini_loss, mini_f1, _ = evaluate_model(model, mini_dataloader)
+        mini_loss, mini_f1, _ = evaluate_model(
+            model, 
+            get_eval_dataloader(mini_data, batch_size, seq_len)
+        )
 
         mini_loss_list.append(mini_loss)
         mini_f1_list.append(mini_f1)
 
         print("[mini] loss: " + str(mini_loss) + " F1: " + str(mini_f1))
     else:
-        train_loss, train_f1, train_tag_to_score = evaluate_model(model, train_dataloader)
-        val_loss, val_f1, val_tag_to_score = evaluate_model(model, val_dataloader)
+        train_loss, train_f1, train_tag_to_score = evaluate_model(
+            model, 
+            get_eval_dataloader(train_data, batch_size, seq_len)
+        )
+        val_loss, val_f1, val_tag_to_score = evaluate_model(
+            model, 
+            get_eval_dataloader(val_data, batch_size, seq_len)
+        )
 
         train_loss_list.append(train_loss)
         val_loss_list.append(val_loss)
@@ -174,9 +163,17 @@ if __name__ == '__main__':
         print("\nTraining epoch " + str(epoch))
 
         if args.mini:
-            train_epoch(model, mini_dataloader, scheduler, optimizer)
+            train_epoch(
+                model, 
+                get_train_dataloader(mini_data, batch_size, seq_len), 
+                scheduler, 
+                optimizer
+            )
 
-            mini_loss, mini_f1, mini_tag_to_score = evaluate_model(model, mini_dataloader)
+            mini_loss, mini_f1, mini_tag_to_score = evaluate_model(
+                model, 
+                get_eval_dataloader(mini_data, batch_size, seq_len)
+            )
 
             mini_loss_list.append(mini_loss)
             mini_f1_list.append(mini_f1)
@@ -186,10 +183,21 @@ if __name__ == '__main__':
                 print("[mini] tag to score:")
                 pprint(mini_tag_to_score)
         else:
-            train_epoch(model, train_dataloader, scheduler, optimizer)
+            train_epoch(
+                model, 
+                get_train_dataloader(train_data, batch_size, seq_len), 
+                scheduler, 
+                optimizer
+            )
 
-            train_loss, train_f1, train_tag_to_score = evaluate_model(model, train_dataloader)
-            val_loss, val_f1, val_tag_to_score = evaluate_model(model, val_dataloader)
+            train_loss, train_f1, train_tag_to_score = evaluate_model(
+                model, 
+                get_eval_dataloader(train_data, batch_size, seq_len)
+            )
+            val_loss, val_f1, val_tag_to_score = evaluate_model(
+                model, 
+                get_eval_dataloader(val_data, batch_size, seq_len)
+            )
 
             train_loss_list.append(train_loss)
             val_loss_list.append(val_loss)

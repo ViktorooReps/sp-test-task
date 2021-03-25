@@ -29,34 +29,29 @@ def unpack(filenames):
 
     for filename in filenames:
         print("Unpacking " + filename)
-        df = pd.read_csv(filename, sep=" ", skip_blank_lines=True)
 
-        for token in df["-TOKEN-"]:
-            if len(str(token)) > 0: # adds empty string????
+        with open(filename) as f:
+            header = f.readline() 
+
+            for line in f:
+                token, _, _, label = line.rstrip().split(" ")
                 token_voc.add(preprocess(token))
-
-                for symbol in str(token):
-                    char_voc.add(symbol)
-
-        for tag in df["-NETAG-"]:
-            if type(tag) == str:
-                tag_voc.add(tag)
-
-        if "" in token_voc:
-            token_voc.remove("")
+                tag_voc.add(label)
+                for char in token:
+                    char_voc.add(char)
 
     return (token_voc, char_voc, tag_voc)
 
 def get_labeled_tokens(filename):
-    df = pd.read_csv(filename, sep=" ", skip_blank_lines=True)
     tokens = []
-    for token in df["-TOKEN-"]:
-        if len(str(token)) > 0 and token != "":
-            tokens.append(resize(token))
-    
     labels = []
-    for label in df["-NETAG-"]:
-        if type(label) == str:
+
+    with open(filename) as f:
+        header = f.readline() 
+
+        for line in f:
+            token, _, _, label = line.rstrip().split(" ")
+            tokens.append(preprocess(token))
             labels.append(label)
 
     return (tokens, labels)
@@ -66,22 +61,22 @@ if __name__ == '__main__':
     token_voc, char_voc, tag_voc = unpack(["conll2003/test.txt", "conll2003/train.txt", "conll2003/valid.txt"])
 
     train_tokens, train_labels = get_labeled_tokens("conll2003/train.txt")
-    print("\nTotal train tokens: " + str(len(train_tokens)))
+    print("\nTotal train tokens: " + str(len(train_tokens)), len(train_labels))
     save_obj(train_tokens, "train_tokens")
     save_obj(train_labels, "train_labels")
 
     val_tokens, val_labels = get_labeled_tokens("conll2003/valid.txt")
-    print("Total val tokens: " + str(len(val_tokens)))
+    print("Total val tokens: " + str(len(val_tokens)), len(val_labels))
     save_obj(val_tokens, "val_tokens")
     save_obj(val_labels, "val_labels")
 
     test_tokens, test_labels = get_labeled_tokens("conll2003/test.txt")
-    print("Total test tokens: " + str(len(test_tokens)))
+    print("Total test tokens: " + str(len(test_tokens)), len(test_labels))
     save_obj(test_tokens, "test_tokens")
     save_obj(test_labels, "test_labels")
 
     mini_tokens, mini_labels = get_labeled_tokens("conll2003/mini.txt")
-    print("Total mini tokens: " + str(len(mini_tokens)))
+    print("Total mini tokens: " + str(len(mini_tokens)), len(mini_labels))
     save_obj(mini_tokens, "mini_tokens")
     save_obj(mini_labels, "mini_labels")
 
