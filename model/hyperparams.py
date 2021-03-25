@@ -6,11 +6,11 @@ max_word_len = 20
 
 batch_size = 10
 
-epochs = 100 # default: 50
+epochs = 50 # default: 50
 
-initial_lr = 0.015 # default: 0.015
+initial_lr = 0.05 # default: 0.015
 
-decay_rate = 0.05 
+decay_rate = 0.2
 
 momentum = 0.9
 
