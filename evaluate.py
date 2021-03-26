@@ -1,5 +1,5 @@
 from model.hyperparams import *
-from model.nerc import Data, collate_fn
+from model.nerc import Data, collate_fn, get_eval_dataloader
 from utils.memory_management import load_obj, save_obj
 from utils.plotter import plot_last_run
 from extract import preprocess
@@ -76,17 +76,14 @@ def evaluate_model(model, dataloader):
             lbls = lbls.to(device)
 
             emissions = model(chars, toks).to(device)
-            loss = model.loss(emissions, lbls.reshape(1, batch_size)).item()
+            loss = model.loss(emissions, lbls).item()
 
             total_loss += loss
             total_batches += 1
 
-            try:
-                predicted_labels += model.decode(emissions)[0]
-            except Exception:
-                predicted_labels += model.decode(emissions).tolist()
+            predicted_labels += sum(model.decode(emissions), [])
 
-            labels += lbls.detach().tolist()
+            labels += sum(lbls.detach().tolist(), [])
 
         final_loss = total_loss / total_batches
 
@@ -109,26 +106,12 @@ if __name__ == '__main__':
         tok_to_idx, char_to_idx, tag_to_idx, max_token_len=max_word_len,
         padding=padding, preprocessor=preprocess)
 
-    test_dataloader = DataLoader(
-        test_data, batch_size, 
-        shuffle=False, 
-        collate_fn=collate_fn, 
-        drop_last=True
-    )
-
     train_tokens = load_obj("train_tokens")
     train_labels = load_obj("train_labels")
 
     train_data = Data(train_tokens, train_labels, 
         tok_to_idx, char_to_idx, tag_to_idx, max_token_len=max_word_len,
         padding=padding, preprocessor=preprocess)
-
-    train_dataloader = DataLoader(
-        train_data, batch_size, 
-        shuffle=False, 
-        collate_fn=collate_fn, 
-        drop_last=True
-    )
 
     val_tokens = load_obj("val_tokens")
     val_labels = load_obj("val_labels")
@@ -137,20 +120,21 @@ if __name__ == '__main__':
         tok_to_idx, char_to_idx, tag_to_idx, max_token_len=max_word_len,
         padding=padding, preprocessor=preprocess)
 
-    val_dataloader = DataLoader(
-        val_data, batch_size, 
-        shuffle=False, 
-        collate_fn=collate_fn, 
-        drop_last=True
-    )
-
     print("\nEvaluating on test set")
-    test_loss, test_f1, test_tag_to_score = evaluate_model(model, test_dataloader)
+    test_loss, test_f1, test_tag_to_score = evaluate_model(
+        model, 
+        get_eval_dataloader(test_data, batch_size, seq_len)
+    )
     print("Evaluating on train set")
-    train_loss, train_f1, train_tag_to_score = evaluate_model(model, train_dataloader)
+    train_loss, train_f1, train_tag_to_score = evaluate_model(
+        model, 
+        get_eval_dataloader(train_data, batch_size, seq_len)
+    )
     print("Evaluating on valid set")
-    val_loss, val_f1, valid_tag_to_score = evaluate_model(model, val_dataloader)
-
+    val_loss, val_f1, valid_tag_to_score = evaluate_model(
+        model, 
+        get_eval_dataloader(val_data, batch_size, seq_len)
+    )
     print("\n[test]  loss: " + str(test_loss) + " F1: " + str(test_f1))
     print("[test] tag to score:")
     pprint(test_tag_to_score)
