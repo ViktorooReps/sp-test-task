@@ -1,5 +1,6 @@
 import sys
 import os
+import argparse
 
 PACKAGE_PARENT = ".."
 SCRIPT_DIR = os.path.dirname(
@@ -10,6 +11,64 @@ sys.path.append(os.path.normpath(os.path.join(SCRIPT_DIR, PACKAGE_PARENT)))
 from utils.memory_management import load_obj
 
 import matplotlib.pyplot as plt
+
+def plot_in_comparison(since_epoch):
+    train_losses = load_obj("train_loss_list")[since_epoch:]
+    train_f1s = load_obj("train_f1_list")[since_epoch:]
+
+    val_losses = load_obj("val_loss_list")[since_epoch:]
+    val_f1s = load_obj("val_f1_list")[since_epoch:]
+
+    total_epochs = len(train_losses) + since_epoch
+
+    plt.figure(3)
+
+    plt.ylabel("Loss")
+    plt.title("Loss after " + str(since_epoch) + " epochs")
+    plt.xlabel("Epochs")
+
+    plt.plot(
+        range(since_epoch, total_epochs), train_losses,
+        color="red",
+        label="train set"
+    )
+
+    plt.plot(
+        range(since_epoch, total_epochs), val_losses,
+        color="blue",
+        label="valid set"
+    )
+
+    plt.legend(loc="upper left")
+
+    plt.tight_layout()
+
+    plt.savefig("plots/loss_" + str(since_epoch) + ".png")
+
+    plt.figure(4)
+
+    plt.ylabel("F1")
+    plt.title("F1 after " + str(since_epoch) + " epochs")
+    plt.xlabel("Epochs")
+
+    plt.plot(
+        range(since_epoch, total_epochs), train_f1s,
+        color="red",
+        label="train set"
+    )
+
+    plt.plot(
+        range(since_epoch, total_epochs), val_f1s,
+        color="blue",
+        label="valid set"
+    )
+
+    plt.legend(loc="upper left")
+
+    plt.tight_layout()
+
+    plt.savefig("plots/f1_" + str(since_epoch) + ".png")
+
 
 def plot_last_run():
     train_losses = load_obj("train_loss_list")
@@ -76,4 +135,10 @@ def plot_mini():
     plt.savefig("plots/mini.png")
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--since", type=int, default=0)
+
+    args = parser.parse_args()
+
     plot_last_run()
+    plot_in_comparison(args.since)

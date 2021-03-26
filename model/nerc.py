@@ -229,7 +229,7 @@ class CNNbLSTMCRF(nn.Module):
         return self.crf.decode(emissions)
 
 
-class CNNbLSTMSoftmax(nn.Module):
+class CNNbLSTMSoftmax(nn.Module): # deprecated
     """
     CNN:
     (batch_size, 1, char_emb_size, max_word_len)
@@ -335,7 +335,7 @@ class CNNbLSTMSoftmax(nn.Module):
         return torch.argmax(emissions, dim=1)
 
 
-class CNNCRF(nn.Module):
+class CNNCRF(nn.Module): # deprecated
     """
     Subnet of CNNbLSTMCRF
     """
@@ -397,7 +397,7 @@ class CNNCRF(nn.Module):
         return self.crf.decode(emissions)
 
 
-class bLSTMCRF(nn.Module):
+class bLSTMCRF(nn.Module): # deprecated
     """
     Subnet of CNNbLSTMCRF
     """
@@ -460,7 +460,7 @@ class bLSTMCRF(nn.Module):
         return self.crf.decode(emissions)
 
 
-class OnlyCRF(nn.Module):
+class OnlyCRF(nn.Module): # deprecated
     """
     Subnet of CNNbLSTMCRF
     """

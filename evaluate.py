@@ -1,7 +1,7 @@
 from model.hyperparams import *
 from model.nerc import Data, collate_fn, get_eval_dataloader
 from utils.memory_management import load_obj, save_obj
-from utils.plotter import plot_last_run
+from utils.plotter import plot_last_run, plot_in_comparison
 from extract import preprocess
 
 from torch.utils.data import DataLoader
@@ -145,4 +145,9 @@ if __name__ == '__main__':
     print("[valid] tag to score:")
     pprint(valid_tag_to_score)
 
+    val_f1s = np.array(load_obj("val_f1_list"))
+    print("Epochs with best F1 scores on validation set:")
+    print(val_f1s.argsort()[::-1])
+
     plot_last_run()
+    plot_in_comparison(5)
