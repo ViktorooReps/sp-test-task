@@ -397,24 +397,54 @@ class CNNCRF(nn.Module): # deprecated
         return self.crf.decode(emissions)
 
 
-class bLSTMCRF(nn.Module): # deprecated
+class bLSTMCRF(nn.Module):
     """
-    Subnet of CNNbLSTMCRF
+    bLSTM:
+    (batch_size, seq_len, token_emb_size)
+     ||  
+     \/
+    (batch_size, seq_len, 2 * hidden_size)
+
+    CRF:
+    (batch_size, seq_len, 2 * hidden_size)
+     || linear 
+     \/
+    (batch_size, seq_len, num_tags)
+     || CRF
+     \/
+    (batch_size, seq_len)
     """
-    def __init__(self, char_to_idx, tok_to_idx, tag_to_idx, token_vecs, char_emb_size=30, char_repr_size=30, 
-                 token_emb_size=100, lstm_hidden_size=200, max_word_len=20, sent_len=10, dropout_rate=0.5):
+
+    def __init__(self, char_to_idx, tok_to_idx, tag_to_idx, token_vecs, char_emb_size=30, 
+        char_repr_size=30, token_emb_size=100, lstm_hidden_size=200, max_word_len=20, 
+        sent_len=10, dropout_rate=0.5, break_simmetry=True):
         super(bLSTMCRF, self).__init__()
 
-        self.init_embeddings(len(char_to_idx), char_emb_size, len(tok_to_idx), token_emb_size, token_vecs)
+        self.init_embeddings(
+            len(char_to_idx), char_emb_size, 
+            len(tok_to_idx), token_emb_size, 
+            token_vecs
+        )
 
         self.inp_dropout = nn.Dropout(p=dropout_rate)
-        self.lstm = nn.LSTM(token_emb_size, lstm_hidden_size, bidirectional=True, batch_first=True)
+        self.lstm = nn.LSTM(
+            token_emb_size, 
+            lstm_hidden_size, 
+            bidirectional=True, 
+            batch_first=True
+        )
         self.outp_dropout = nn.Dropout(p=dropout_rate)
 
         for names in self.lstm._all_weights:
             for name in filter(lambda n: "bias" in n,  names):
                 bias = getattr(self.lstm, name)
-                nn.init.zeros_(bias)
+                if not break_simmetry:
+                    nn.init.zeros_(bias)
+                else:
+                    torch.nn.init.sparse_(
+                        bias.reshape(bias.size()[0], 1), 
+                        sparsity=0.5
+                    )
 
                 # setting forget gates biases to 1.0
                 n = bias.size(0)
@@ -437,8 +467,6 @@ class bLSTMCRF(nn.Module): # deprecated
         toks: (batch_size)
         """
         x = self.tok_embs(toks)
-        x = torch.unsqueeze(x, 0)
-
         x = self.inp_dropout(x)
         x, _ = self.lstm(x)
         x = self.outp_dropout(x)
@@ -454,7 +482,7 @@ class bLSTMCRF(nn.Module): # deprecated
         self.tok_embs.load_state_dict({"weight": token_vecs})
 
     def loss(self, emissions, labels):
-        return - self.crf(emissions, labels)
+        return - self.crf(emissions, labels, reduction="mean")
 
     def decode(self, emissions):
         return self.crf.decode(emissions)
