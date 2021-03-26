@@ -10,7 +10,81 @@ from pprint import pprint
 import matplotlib.pyplot as plt
 import numpy as np
 
-def score(labels, preds, idx_to_tag, excluded_tags={"O"}):
+def split_tag(tag):
+    """Tag format: [B/I]-[PER/ORG/LOC/MISC] ID-type"""
+
+    if tag == "O":
+        return tag, None
+
+    ent_id, ent_type = tag.split("-")
+
+    return ent_id, ent_type
+
+def assemble_entity(ent_type, idx_list):
+    return tuple([ent_type] + idx_list)
+
+def extract_entities(tags, idx_to_tag):
+    """Extracts entities encoded in series of BIO tags
+    
+    Entity structure: ("type", B-tag, I-tag, I-tag, ... )
+    B-tags and I-tags represent indicies of corressponding tags in tags list
+
+    Returns set of extracted entities
+    """
+
+    extracted_entities = set()
+
+    entity_assembler = { 
+        "PER" : [],
+        "ORG" : [],
+        "LOC" : [],
+        "MISC": [] 
+    }
+
+    for tag_idx, tag_id in enumerate(tags):
+        tag = idx_to_tag[tag_id]
+        ent_id, ent_type = split_tag(tag)
+
+        if ent_type != None: 
+            idx_list = entity_assembler[ent_type]
+
+            if ent_id == "B":
+                if len(idx_list) > 0:
+                    extracted_entities.add(assemble_entity(ent_type, idx_list))
+                
+                entity_assembler[ent_type] = [tag_idx]
+
+            if ent_id == "I":
+                entity_assembler[ent_type] += [tag_idx]
+    
+    for ent_type in entity_assembler:
+        idx_list = entity_assembler[ent_type]
+
+        if len(idx_list) > 0:
+            extracted_entities.add(assemble_entity(ent_type, idx_list))
+    
+    return extracted_entities
+
+def score_entities(preds, labels, idx_to_tag):
+    """Returns scores with respect to recognized named entities"""
+
+    pred_entities = extract_entities(preds, idx_to_tag)
+    true_entities = extract_entities(labels, idx_to_tag)
+
+    TP = len(pred_entities.intersection(true_entities))
+    FP = len(pred_entities.difference(true_entities))
+    FN = len(true_entities.difference(pred_entities))
+
+    with np.errstate(divide='ignore', invalid='ignore'):
+        precision = np.true_divide(TP, (TP + FP))
+        recall = np.true_divide(TP, (TP + FN))
+        f1 = np.true_divide(2 * precision * recall, (precision + recall))
+
+    return f1, precision, recall
+
+def score_tokens(labels, preds, idx_to_tag, excluded_tags={"O"}):
+    """Returns averaged F1 measure over tag classes and scores for each class"""
+
     tag_to_oh_preds = dict()
     tag_to_oh_lbls = dict()
 
@@ -57,7 +131,7 @@ def score(labels, preds, idx_to_tag, excluded_tags={"O"}):
         }
 
     f1 = sum(tag_to_score[val]["f1"] if val not in excluded_tags else 0 
-        for val in idx_to_tag.values()) / (len(idx_to_tag) - 1)
+        for val in idx_to_tag.values()) / (len(idx_to_tag) - len(excluded_tags))
 
     return f1, tag_to_score
 
@@ -88,9 +162,9 @@ def evaluate_model(model, dataloader):
         final_loss = total_loss / total_batches
 
         idx_to_tag = load_obj("idx_to_tag")
-        f1, tag_to_score = score(labels, predicted_labels, idx_to_tag)
+        f1, _, _ = score_entities(labels, predicted_labels, idx_to_tag)
 
-    return (final_loss, f1, tag_to_score)
+    return (final_loss, f1)
 
 if __name__ == '__main__':
     char_to_idx = load_obj("char_to_idx")
@@ -121,29 +195,23 @@ if __name__ == '__main__':
         padding=padding, preprocessor=preprocess)
 
     print("\nEvaluating on test set")
-    test_loss, test_f1, test_tag_to_score = evaluate_model(
+    test_loss, test_f1 = evaluate_model(
         model, 
         get_eval_dataloader(test_data, batch_size, seq_len)
     )
     print("Evaluating on train set")
-    train_loss, train_f1, train_tag_to_score = evaluate_model(
+    train_loss, train_f1 = evaluate_model(
         model, 
         get_eval_dataloader(train_data, batch_size, seq_len)
     )
     print("Evaluating on valid set")
-    val_loss, val_f1, valid_tag_to_score = evaluate_model(
+    val_loss, val_f1 = evaluate_model(
         model, 
         get_eval_dataloader(val_data, batch_size, seq_len)
     )
     print("\n[test]  loss: " + str(test_loss) + " F1: " + str(test_f1))
-    print("[test] tag to score:")
-    pprint(test_tag_to_score)
     print("[train] loss: " + str(train_loss) + " F1: " + str(train_f1))
-    print("[train] tag to score:")
-    pprint(train_tag_to_score)
     print("[valid] loss: " + str(val_loss) + " F1: " + str(val_f1))
-    print("[valid] tag to score:")
-    pprint(valid_tag_to_score)
 
     val_f1s = np.array(load_obj("val_f1_list"))
     print("Epochs with best F1 scores on validation set:")

@@ -128,8 +128,7 @@ if __name__ == '__main__':
 
     print("\nPre train results:")
     if args.mini:
-        mini_loss, mini_f1, _ = evaluate_model(
-            model, 
+        mini_loss, mini_f1 = evaluate_model(model, 
             get_eval_dataloader(mini_data, batch_size, seq_len)
         )
 
@@ -138,12 +137,10 @@ if __name__ == '__main__':
 
         print("[mini] loss: " + str(mini_loss) + " F1: " + str(mini_f1))
     else:
-        train_loss, train_f1, train_tag_to_score = evaluate_model(
-            model, 
+        train_loss, train_f1 = evaluate_model(model, 
             get_eval_dataloader(train_data, batch_size, seq_len)
         )
-        val_loss, val_f1, val_tag_to_score = evaluate_model(
-            model, 
+        val_loss, val_f1 = evaluate_model(model, 
             get_eval_dataloader(val_data, batch_size, seq_len)
         )
 
@@ -170,8 +167,7 @@ if __name__ == '__main__':
                 optimizer
             )
 
-            mini_loss, mini_f1, mini_tag_to_score = evaluate_model(
-                model, 
+            mini_loss, mini_f1 = evaluate_model(model, 
                 get_eval_dataloader(mini_data, batch_size, seq_len)
             )
 
@@ -179,9 +175,6 @@ if __name__ == '__main__':
             mini_f1_list.append(mini_f1)
 
             print("[mini] loss: " + str(mini_loss) + " F1: " + str(mini_f1))
-            if args.scores:
-                print("[mini] tag to score:")
-                pprint(mini_tag_to_score)
         else:
             train_epoch(
                 model, 
@@ -190,12 +183,10 @@ if __name__ == '__main__':
                 optimizer
             )
 
-            train_loss, train_f1, train_tag_to_score = evaluate_model(
-                model, 
+            train_loss, train_f1 = evaluate_model(model, 
                 get_eval_dataloader(train_data, batch_size, seq_len)
             )
-            val_loss, val_f1, val_tag_to_score = evaluate_model(
-                model, 
+            val_loss, val_f1 = evaluate_model(model, 
                 get_eval_dataloader(val_data, batch_size, seq_len)
             )
 
@@ -206,13 +197,7 @@ if __name__ == '__main__':
             val_f1_list.append(val_f1)
 
             print("[train] loss: " + str(train_loss) + " F1: " + str(train_f1))
-            if args.scores:
-                print("[train] tag to score:")
-                pprint(train_tag_to_score)
             print("[valid] loss: " + str(val_loss) + " F1: " + str(val_f1))
-            if args.scores:
-                print("[valid] tag to score:")
-                pprint(val_tag_to_score)
         
         if args.info:
             for name, param in model.named_parameters():
