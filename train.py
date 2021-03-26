@@ -219,7 +219,6 @@ if __name__ == '__main__':
                 if param.requires_grad:
                     print(name, "norm:", torch.norm(param.data).item())
 
-
     if args.mini:
         save_obj(mini_loss_list, "mini_loss_list")
         save_obj(mini_f1_list, "mini_f1_list")
