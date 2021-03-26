@@ -81,10 +81,7 @@ class Data(Dataset):
 
         seq = []
         for idx in seq_idxs:
-            try:
-                raw_token = self.X[idx]
-            except IndexError:
-                print(idx, len(self.X))
+            raw_token = self.X[idx]
             token = self.preprocessor(raw_token)
             tok_idx = self.tok_to_idx[token]
             lbl_idx = self.tag_to_idx[self.y[idx]]
