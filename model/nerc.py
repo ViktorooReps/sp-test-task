@@ -147,6 +147,8 @@ class CNNbLSTMCRF(nn.Module):
             token_vecs
         )
 
+        self.char_dropout = nn.Dropout(p=dropout_rate)
+
         self.conv = nn.Conv3d(
             in_channels=1, 
             out_channels=char_repr_size, 
@@ -199,6 +201,7 @@ class CNNbLSTMCRF(nn.Module):
         toks: (batch_size)
         """
         xc = self.char_embs(chars)
+        xc = self.char_dropout(xc)
         xc = torch.unsqueeze(xc, 1)
         xc = self.conv(xc)
         xc = self.max_pool(xc)
