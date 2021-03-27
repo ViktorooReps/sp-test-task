@@ -59,8 +59,6 @@ def extract_seqs(filename, tok_to_idx, tag_to_idx):
         ) for seq in seqs
     ]
 
-    inp = input()
-
     return seqs
 
 
