@@ -1,5 +1,5 @@
 from model.hyperparams import *
-from model.nerc import Data, collate_fn, get_eval_dataloader
+from model.nerc import Data, get_dataloader
 from utils.memory_management import load_obj, save_obj
 from utils.plotter import plot_last_run, plot_in_comparison
 from extract import preprocess
@@ -144,18 +144,18 @@ def evaluate_model(model, dataloader):
     total_loss = 0
     
     with torch.no_grad():
-        for batch_idx, (chars, toks, lbls) in enumerate(dataloader):
+        for batch_idx, (chars, toks, lbls, seq_lens) in enumerate(dataloader):
             chars = chars.to(device)
             toks = toks.to(device)
             lbls = lbls.to(device)
 
-            emissions = model(chars, toks).to(device)
-            loss = model.loss(emissions, lbls).item()
+            emissions = model(chars, toks, seq_lens).to(device)
+            loss = model.loss(emissions, lbls, seq_lens).item()
 
             total_loss += loss
             total_batches += 1
 
-            predicted_labels += sum(model.decode(emissions), [])
+            predicted_labels += sum(model.decode(emissions, seq_lens), [])
 
             labels += sum(lbls.detach().tolist(), [])
 

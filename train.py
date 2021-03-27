@@ -16,16 +16,15 @@ import torch
 import torch.optim as optim
 import datetime
 
-
 def train_epoch(model, dataloader, scheduler, optimizer):
     model.train()
-    for batch_idx, (chars, toks, lbls) in enumerate(dataloader):
+    for batch_idx, (chars, toks, lbls, seq_lens) in enumerate(dataloader):
         chars = chars.to(device)
         toks = toks.to(device)
         lbls = lbls.to(device)
 
-        emissions = model(chars, toks).to(device)
-        loss = model.loss(emissions, lbls)
+        emissions = model(chars, toks, seq_lens).to(device)
+        loss = model.loss(emissions, lbls, seq_lens)
 
         loss.backward()
 
@@ -99,23 +98,20 @@ if __name__ == '__main__':
     optimizer = optim.SGD(model.parameters(), lr=initial_lr, momentum=momentum)
     scheduler = optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lr_lambda)
 
-    mini_tokens = load_obj("mini_tokens")
-    mini_labels = load_obj("mini_labels")
-    mini_data = Data(mini_tokens, mini_labels, 
-        tok_to_idx, char_to_idx, tag_to_idx, max_token_len=max_word_len, 
-        padding=padding, preprocessor=preprocess)
+    data_args = dict(
+        char_to_idx=char_to_idx, 
+        idx_to_tok=idx_to_tok,
+        max_token_len=max_word_len
+    )
 
-    train_tokens = load_obj("train_tokens")
-    train_labels = load_obj("train_labels")
-    train_data = Data(train_tokens, train_labels, 
-        tok_to_idx, char_to_idx, tag_to_idx, max_token_len=max_word_len, 
-        padding=padding, preprocessor=preprocess)
+    mini_seqs = load_obj("mini_seqs")
+    mini_data = Data(mini_seqs, **data_args)
 
-    val_tokens = load_obj("val_tokens")
-    val_labels = load_obj("val_labels")
-    val_data = Data(val_tokens, val_labels, 
-        tok_to_idx, char_to_idx, tag_to_idx, max_token_len=max_word_len, 
-        padding=padding, preprocessor=preprocess)
+    train_seqs = load_obj("train_seqs")
+    train_data = Data(train_seqs, **data_args)
+
+    val_seqs = load_obj("val_seqs")
+    val_data = Data(val_seqs, **data_args)
 
     train_loss_list = []
     val_loss_list = []
@@ -126,10 +122,21 @@ if __name__ == '__main__':
     mini_loss_list = []
     mini_f1_list = []
 
+    dl_args = dict(
+        batch_size=batch_size,
+        pad_collator=PaddingCollator(
+            char_pad=char_to_idx["<pad>"],
+            max_word_len=max_word_len,
+            tok_pad=tok_to_idx["<pad>"],
+            tag_pad=tag_to_idx["O"]
+        )
+    )
+    print(dl_args)
+
     print("\nPre train results:")
     if args.mini:
         mini_loss, mini_f1 = evaluate_model(model, 
-            get_eval_dataloader(mini_data, batch_size, seq_len)
+            get_dataloader(mini_data, **dl_args)
         )
 
         mini_loss_list.append(mini_loss)
@@ -137,12 +144,8 @@ if __name__ == '__main__':
 
         print("[mini] loss: " + str(mini_loss) + " F1: " + str(mini_f1))
     else:
-        train_loss, train_f1 = evaluate_model(model, 
-            get_eval_dataloader(train_data, batch_size, seq_len)
-        )
-        val_loss, val_f1 = evaluate_model(model, 
-            get_eval_dataloader(val_data, batch_size, seq_len)
-        )
+        train_loss, train_f1 = evaluate_model(model, get_dataloader(train_data, **dl_args))
+        val_loss, val_f1 = evaluate_model(model, get_dataloader(val_data, **dl_args))
 
         train_loss_list.append(train_loss)
         val_loss_list.append(val_loss)
@@ -161,15 +164,11 @@ if __name__ == '__main__':
 
         if args.mini:
             train_epoch(
-                model, 
-                get_train_dataloader(mini_data, batch_size, seq_len), 
-                scheduler, 
-                optimizer
+                model, get_dataloader(mini_data, **dl_args),
+                scheduler, optimizer
             )
 
-            mini_loss, mini_f1 = evaluate_model(model, 
-                get_eval_dataloader(mini_data, batch_size, seq_len)
-            )
+            mini_loss, mini_f1 = evaluate_model(model, get_dataloader(mini_data, **dl_args))
 
             mini_loss_list.append(mini_loss)
             mini_f1_list.append(mini_f1)
@@ -177,18 +176,12 @@ if __name__ == '__main__':
             print("[mini] loss: " + str(mini_loss) + " F1: " + str(mini_f1))
         else:
             train_epoch(
-                model, 
-                get_train_dataloader(train_data, batch_size, seq_len), 
-                scheduler, 
-                optimizer
+                model, get_dataloader(train_data, **dl_args),
+                scheduler, optimizer
             )
 
-            train_loss, train_f1 = evaluate_model(model, 
-                get_eval_dataloader(train_data, batch_size, seq_len)
-            )
-            val_loss, val_f1 = evaluate_model(model, 
-                get_eval_dataloader(val_data, batch_size, seq_len)
-            )
+            train_loss, train_f1 = evaluate_model(model, get_dataloader(train_data, **dl_args))
+            val_loss, val_f1 = evaluate_model(model, get_dataloader(val_data, **dl_args))
 
             train_loss_list.append(train_loss)
             val_loss_list.append(val_loss)

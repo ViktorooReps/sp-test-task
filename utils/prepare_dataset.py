@@ -1,12 +1,11 @@
-def delete_blanks(filename):
-    lines = []
+def delete_headers(filename):
     with open(filename, "r") as f:
-        lines = [line for line in f if len(line) > 1]
+        file_contents = f.read().replace("-DOCSTART- -X- -X- O\n\n", "").rstrip()
 
     with open(filename, "w") as f:
-        f.writelines(lines)
+        f.write(file_contents)
 
 if __name__ == '__main__':
-    delete_blanks("conll2003/test.txt")
-    delete_blanks("conll2003/train.txt")
-    delete_blanks("conll2003/valid.txt")
+    delete_headers("conll2003/test.txt")
+    delete_headers("conll2003/train.txt")
+    delete_headers("conll2003/valid.txt")

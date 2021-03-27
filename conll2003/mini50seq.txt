@@ -1,4 +1,3 @@
--TOKEN- -POSTAG- -CHUNKTAG- -NETAG-
 EU NNP B-NP B-ORG
 rejects VBZ B-VP O
 German JJ B-NP B-MISC
@@ -8,10 +7,13 @@ boycott VB I-VP O
 British JJ B-NP B-MISC
 lamb NN I-NP O
 . . O O
+
 Peter NNP B-NP B-PER
 Blackburn NNP I-NP I-PER
+
 BRUSSELS NNP B-NP B-LOC
 1996-08-22 CD I-NP O
+
 The DT B-NP O
 European NNP I-NP B-ORG
 Commission NNP I-NP I-ORG
@@ -42,6 +44,7 @@ transmitted VBN I-VP O
 to TO B-PP O
 sheep NN B-NP O
 . . O O
+
 Germany NNP B-NP B-LOC
 's POS B-NP O
 representative NN I-NP O
@@ -73,6 +76,7 @@ advice NN I-NP O
 was VBD B-VP O
 clearer JJR B-ADJP O
 . . O O
+
 " " O O
 We PRP B-NP O
 do VBP B-VP O
@@ -106,6 +110,7 @@ a DT B-NP O
 news NN I-NP O
 briefing NN I-NP O
 . . O O
+
 He PRP B-NP O
 said VBD B-VP O
 further JJ B-NP O
@@ -131,6 +136,7 @@ the DT B-NP O
 European NNP I-NP B-ORG
 Union NNP I-NP I-ORG
 . . O O
+
 He PRP B-NP O
 said VBD B-VP O
 a DT B-NP O
@@ -171,6 +177,7 @@ protect VB I-VP O
 human JJ B-NP O
 health NN I-NP O
 . . O O
+
 Fischler JJR B-NP B-PER
 proposed VBN I-NP O
 EU-wide NNP I-NP B-MISC
@@ -199,6 +206,7 @@ mad JJ B-NP O
 cow NN I-NP O
 disease NN I-NP O
 . . O O
+
 But CC O O
 Fischler NNP B-NP B-PER
 agreed VBD B-VP O
@@ -236,6 +244,7 @@ to TO B-PP O
 human JJ B-NP O
 health NN I-NP O
 . . O O
+
 Spanish NNP B-NP B-MISC
 Farm NNP I-NP O
 Minister NNP I-NP O
@@ -263,7 +272,9 @@ dangerous JJ B-NP O
 generalisation NN I-NP O
 . . O O
 " " O O
+
 . . O O
+
 Only RB B-NP O
 France NNP I-NP B-LOC
 and CC I-NP O
@@ -273,6 +284,7 @@ Fischler NNP B-NP B-PER
 's POS B-NP O
 proposal NN I-NP O
 . . O O
+
 The DT B-NP O
 EU NNP I-NP B-ORG
 's POS B-NP O
@@ -299,6 +311,7 @@ senior JJ I-NP O
 veterinary JJ I-NP O
 officials NNS I-NP O
 . . O O
+
 Sheep NNP B-NP O
 have VBP B-VP O
 long RB I-VP O
@@ -329,6 +342,7 @@ containing VBG B-VP O
 animal NN B-NP O
 waste NN I-NP O
 . . O O
+
 British JJ B-NP B-MISC
 farmers NNS I-NP O
 denied VBN B-VP O
@@ -364,6 +378,7 @@ consumers NNS B-NP O
 across IN B-PP O
 Europe NNP B-NP B-LOC
 . . O O
+
 " " O O
 What WP B-NP O
 we PRP B-NP O
@@ -403,6 +418,7 @@ on IN B-PP O
 BBC NNP B-NP B-ORG
 radio NN I-NP I-ORG
 . . O O
+
 Bonn NNP B-NP B-LOC
 has VBZ B-VP O
 led VBN I-VP O
@@ -437,6 +453,7 @@ eating VBG B-VP O
 contaminated VBN I-VP O
 beef NN B-NP O
 . . O O
+
 Germany NNP B-NP B-LOC
 imported VBD B-VP O
 47,600 CD B-NP O
@@ -452,6 +469,7 @@ of IN B-PP O
 total JJ B-NP O
 imports NNS I-NP O
 . . O O
+
 It PRP B-NP O
 brought VBD B-VP O
 in IN B-PP O
@@ -468,7 +486,7 @@ of IN B-PP O
 overall JJ B-NP O
 imports NNS I-NP O
 . . O O
--DOCSTART- -X- -X- O
+
 Rare NNP B-NP O
 Hendrix NNP I-NP B-PER
 song NN I-NP O
@@ -479,8 +497,10 @@ almost RB B-NP O
 $ $ I-NP O
 17,000 CD I-NP O
 . . O O
+
 LONDON NNP B-NP B-LOC
 1996-08-22 CD I-NP O
+
 A DT B-NP O
 rare JJ I-NP O
 early JJ I-NP O
@@ -516,6 +536,7 @@ musician NN I-NP O
 favourite JJ I-NP O
 possessions NNS I-NP O
 . . O O
+
 A DT B-NP O
 Florida NNP I-NP B-LOC
 restaurant NN I-NP O
@@ -551,6 +572,7 @@ in IN B-PP O
 late JJ B-NP O
 1966 CD I-NP O
 . . O O
+
 At IN B-PP O
 the DT B-NP O
 end NN I-NP O
@@ -583,6 +605,7 @@ by IN B-PP O
 a DT B-NP O
 fan NN I-NP O
 . . O O
+
 Buyers NNS B-NP O
 also RB B-ADVP O
 snapped VBD B-VP O
@@ -613,6 +636,7 @@ from IN B-PP O
 to TO B-PP O
 1969 CD B-NP O
 . . O O
+
 They PRP B-NP O
 included VBD B-VP O
 a DT B-NP O
@@ -646,6 +670,7 @@ $ $ B-NP O
 7,845 CD I-NP O
 ) ) O O
 . . O O
+
 The DT B-NP O
 guitarist NN I-NP O
 died VBD B-VP O
@@ -658,7 +683,7 @@ in IN B-PP O
 aged VBN B-ADJP O
 27 CD B-NP O
 . . O O
--DOCSTART- -X- -X- O
+
 China NNP B-NP B-LOC
 says VBZ B-VP O
 Taiwan NNP B-NP B-LOC
@@ -667,8 +692,10 @@ atmosphere NN B-NP O
 for IN B-PP O
 talks NNS B-NP O
 . . O O
+
 BEIJING VBG B-VP B-LOC
 1996-08-22 CD B-NP O
+
 China NNP B-NP B-LOC
 on IN B-PP O
 Thursday NNP B-NP O
@@ -704,6 +731,7 @@ that WDT B-NP O
 infuriated VBD B-VP O
 Beijing NNP B-NP B-LOC
 . . O O
+
 Speaking VBG B-VP O
 only JJ B-ADVP O
 hours NNS B-NP O
@@ -751,6 +779,7 @@ Taiwan NNP I-NP B-LOC
 authorities NNS I-NP O
 . . O O
 " " O O
+
 State NN B-NP O
 media NNS I-NP O
 quoted VBD B-VP O
@@ -785,6 +814,7 @@ hold VB I-VP O
 political JJ B-NP O
 talks NNS I-NP O
 . . O O
+
 " " O O
 Now RB B-ADVP O
 is VBZ B-VP O
@@ -800,6 +830,7 @@ in IN B-PP O
 political JJ B-NP O
 talks NNS I-NP O
 ... : O O
+
 that WDT B-NP O
 is VBZ B-VP O
 to TO B-VP O
@@ -824,6 +855,7 @@ Tang NNP B-NP B-PER
 as IN B-PP O
 saying VBG B-VP O
 . . O O
+
 The DT B-NP O
 foreign JJ I-NP O
 ministry NN I-NP O
@@ -868,6 +900,7 @@ a DT B-NP O
 renegade NN I-NP O
 province NN I-NP O
 . . O O
+
 China NNP B-NP B-LOC
 , , O O
 which WDT B-NP O
@@ -898,7 +931,7 @@ Vice NNP I-NP O
 President NNP I-NP O
 Lien NNP I-NP B-PER
 . . O O
--DOCSTART- -X- -X- O
+
 China NNP B-NP B-LOC
 says VBZ B-VP O
 time NN B-NP O
@@ -907,8 +940,10 @@ for IN B-PP O
 Taiwan NNP B-NP B-LOC
 talks NNS I-NP O
 . . O O
+
 BEIJING VBG B-VP B-LOC
 1996-08-22 CD B-NP O
+
 China NNP B-NP B-LOC
 has VBZ B-VP O
 said VBD I-VP O
@@ -933,6 +968,7 @@ towards IN B-PP O
 that DT B-NP O
 goal NN I-NP O
 . . O O
+
 Consultations NNS B-NP O
 should MD B-VP O
 be VB I-VP O
@@ -975,7 +1011,7 @@ late RB B-NP O
 on RB B-ADVP O
 Wednesday NNP B-NP O
 . . O O
--DOCSTART- -X- -X- O
+
 German NNP B-NP B-MISC
 July NNP I-NP O
 car NN I-NP O
@@ -987,8 +1023,10 @@ yr NN I-NP O
 / SYM O O
 yr NN B-NP O
 . . O O
+
 FRANKFURT NNP B-NP B-LOC
 1996-08-22 CD I-NP O
+
 German JJ B-NP B-MISC
 first-time JJ I-NP O
 registrations NNS I-NP O
@@ -999,3 +1037,135 @@ jumped VBD B-VP O
 14.2 CD B-NP O
 percent NN I-NP O
 in IN B-PP O
+July NNP B-NP O
+this DT B-NP O
+year NN I-NP O
+from IN B-PP O
+the DT B-NP O
+year-earlier JJ I-NP O
+period NN I-NP O
+, , O O
+the DT B-NP O
+Federal NNP I-NP B-ORG
+office NN I-NP I-ORG
+for IN B-PP I-ORG
+motor NN B-NP I-ORG
+vehicles NNS I-NP I-ORG
+said VBD B-VP O
+on IN B-PP O
+Thursday NNP B-NP O
+. . O O
+
+The DT B-NP O
+office NN I-NP O
+said VBD B-VP O
+356,725 CD B-NP O
+new JJ I-NP O
+cars NNS I-NP O
+were VBD B-VP O
+registered VBN I-VP O
+in IN B-PP O
+July NNP B-NP O
+1996 CD I-NP O
+-- : O O
+304,850 CD B-NP O
+passenger NN I-NP O
+cars NNS I-NP O
+and CC O O
+15,613 CD B-NP O
+trucks NNS I-NP O
+. . O O
+
+The DT B-NP O
+figures NNS I-NP O
+represent VBP B-VP O
+a DT B-NP O
+13.6 CD I-NP O
+percent NN I-NP O
+increase NN I-NP O
+for IN B-PP O
+passenger NN B-NP O
+cars NNS I-NP O
+and CC O O
+a DT B-NP O
+2.2 CD I-NP O
+percent NN I-NP O
+decline NN I-NP O
+for IN B-PP O
+trucks NNS B-NP O
+from IN B-PP O
+July NNP B-NP O
+1995 CD I-NP O
+. . O O
+
+Motor-bike JJ B-NP O
+registration NN I-NP O
+rose VBD B-VP O
+32.7 CD B-NP O
+percent NN I-NP O
+in IN B-PP O
+the DT B-NP O
+period NN I-NP O
+. . O O
+
+The DT B-NP O
+growth NN I-NP O
+was VBD B-VP O
+partly RB I-VP O
+due JJ I-VP O
+to TO I-VP O
+an DT B-NP O
+increased VBN I-NP O
+number NN I-NP O
+of IN B-PP O
+Germans NNPS B-NP B-MISC
+buying VBG B-VP O
+German JJ B-NP B-MISC
+cars NNS I-NP O
+abroad RB B-ADVP O
+, , O O
+while IN B-SBAR O
+manufacturers NNS B-NP O
+said VBD B-VP O
+that DT B-NP O
+domestic JJ I-NP O
+demand NN I-NP O
+was VBD B-VP O
+weak JJ B-ADJP O
+, , O O
+the DT B-NP O
+federal JJ I-NP O
+office NN I-NP O
+said VBD B-VP O
+. . O O
+
+Almost RB B-NP O
+all DT I-NP O
+German JJ I-NP B-MISC
+car NN I-NP O
+manufacturers NNS I-NP O
+posted VBD B-VP O
+gains NNS B-NP O
+in IN B-PP O
+registration NN B-NP O
+numbers NNS I-NP O
+in IN B-PP O
+the DT B-NP O
+period NN I-NP O
+. . O O
+
+Volkswagen NNP B-NP B-ORG
+AG NNP I-NP I-ORG
+won VBD B-VP O
+77,719 CD B-NP O
+registrations NNS I-NP O
+, , O O
+slightly RB B-NP O
+more RBR I-NP O
+than IN I-NP O
+a DT I-NP O
+quarter NN I-NP O
+of IN B-PP O
+the DT B-NP O
+total NN I-NP O
+. . O O
