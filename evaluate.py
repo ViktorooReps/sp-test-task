@@ -136,7 +136,7 @@ def score_tokens(labels, preds, idx_to_tag, excluded_tags={"O"}):
     return f1, tag_to_score
 
 def unpad(padded_tags, seq_lens):
-    """Remove tags used for padding"""
+    """Removes tags used for padding"""
 
     res = []
     for tag_lst, slen in zip(padded_tags, seq_lens):

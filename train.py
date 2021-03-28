@@ -39,7 +39,6 @@ if __name__ == '__main__':
     limit_memory(7 * 1024 * 1024 * 1024)
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("part", choices=["full", "CNN", "LSTM", "CRF", "softmax"], default="full")
     parser.add_argument("--mini", action='store_true')
     parser.add_argument("--info", action='store_true')
     parser.add_argument("--scores", action='store_true')
@@ -68,31 +67,12 @@ if __name__ == '__main__':
 
     token_vecs = torch.cat(token_vecs, dim=0)
 
-    if args.part == "full":
-        print("Initializing CNNbLSTMCRF")
-        model = CNNbLSTMCRF(char_to_idx, tok_to_idx, tag_to_idx, token_vecs)
-
-    if args.part == "CNN":
-        print("Initializing CNNCRF")
-        model = CNNCRF(char_to_idx, tok_to_idx, tag_to_idx, token_vecs)
-
-    if args.part == "LSTM":
-        print("Initializing bLSTMCRF")
-        model = bLSTMCRF(char_to_idx, tok_to_idx, tag_to_idx, token_vecs)
-
-    if args.part == "CRF":
-        print("Initializing CRF")
-        model = OnlyCRF(char_to_idx, tok_to_idx, tag_to_idx, token_vecs)
-
-    if args.part == "softmax":
-        print("Initializing CNNbLSTMSoftmax")
-        model = CNNbLSTMSoftmax(char_to_idx, tok_to_idx, tag_to_idx, token_vecs)
+    model = CNNbLSTMCRF(char_to_idx, tok_to_idx, tag_to_idx, token_vecs)
 
     print("Trainable weights:")
     for name, param in model.named_parameters():
         if param.requires_grad:
             print(name, param.data.shape, "norm:", torch.norm(param.data).item())
-            #print(name, param.data)
     
     lr_lambda = lambda x: 1 / (1 + decay_rate * x)
     optimizer = optim.SGD(model.parameters(), lr=initial_lr, momentum=momentum)
@@ -133,7 +113,6 @@ if __name__ == '__main__':
             tag_pad=tag_to_idx["O"]
         )
     )
-    print(dl_args)
 
     print("\nPre train results:")
     if args.mini:

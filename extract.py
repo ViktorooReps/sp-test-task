@@ -23,6 +23,8 @@ def resize(token):
         return token
 
 def unpack(filenames):
+    """Creates vocabularies from files' contents"""
+
     token_voc = set()
     char_voc = set()
     tag_voc = set()
@@ -44,6 +46,8 @@ def unpack(filenames):
     return (token_voc, char_voc, tag_voc)
 
 def extract_seqs(filename):
+    """Extracts sentences from file and converts into list of pairs (tokens, tags)"""
+
     with open(filename) as f:
         file_contents = f.read() 
     

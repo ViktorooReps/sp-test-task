@@ -13,7 +13,7 @@ from pprint import pprint
 
 class PaddingCollator:
     """Pads tokens with char_pad to max_word_len and tokens
-    with tok_pad to the maximum length in batch"""
+    with tok_pad to the maximum length of batch's sequence"""
 
     def __init__(self, char_pad, max_word_len, tok_pad, tag_pad):
         self.char_pad = char_pad
@@ -68,6 +68,8 @@ def get_eval_dataloader(data, batch_size, pad_collator):
 
 
 class Data(Dataset):
+    """Stores sequences as list of pairs (tokens, tags)"""
+
     SEQS_TOKS = 0
     SEQS_TAGS = 1
 
@@ -222,6 +224,8 @@ class CNNbLSTMCRF(nn.Module):
         self.tok_embs.load_state_dict({"weight": token_vecs})
 
     def build_mask(self, seq_lens):
+        """Converts seq_lens list to mask for CRF"""
+
         max_seq_len = max(seq_lens)
         return torch.stack([
                 torch.cat(
@@ -237,5 +241,7 @@ class CNNbLSTMCRF(nn.Module):
         return - self.crf(emissions, labels, mask=self.build_mask(seq_lens), reduction="mean")
 
     def decode(self, emissions, seq_lens):
+        """Returns unpadded predicted tags"""
+        
         return self.crf.decode(emissions, mask=self.build_mask(seq_lens))
 
