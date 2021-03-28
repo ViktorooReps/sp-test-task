@@ -1,5 +1,5 @@
 from model.hyperparams import *
-from model.nerc import Data, get_dataloader
+from model.nerc import Data, get_eval_dataloader
 from utils.memory_management import load_obj, save_obj
 from utils.plotter import plot_last_run, plot_in_comparison
 from extract import preprocess
@@ -135,6 +135,15 @@ def score_tokens(labels, preds, idx_to_tag, excluded_tags={"O"}):
 
     return f1, tag_to_score
 
+def unpad(padded_tags, seq_lens):
+    """Remove tags used for padding"""
+
+    res = []
+    for tag_lst, slen in zip(padded_tags, seq_lens):
+        res.append(tag_lst[:slen])
+
+    return res
+
 def evaluate_model(model, dataloader):
     model.eval()
 
@@ -157,7 +166,7 @@ def evaluate_model(model, dataloader):
 
             predicted_labels += sum(model.decode(emissions, seq_lens), [])
 
-            labels += sum(lbls.detach().tolist(), [])
+            labels += sum(unpad(lbls.detach().tolist(), seq_lens), [])
 
         final_loss = total_loss / total_batches
 

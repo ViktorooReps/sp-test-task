@@ -43,7 +43,7 @@ def unpack(filenames):
 
     return (token_voc, char_voc, tag_voc)
 
-def extract_seqs(filename, tok_to_idx, tag_to_idx):
+def extract_seqs(filename):
     with open(filename) as f:
         file_contents = f.read() 
     
@@ -52,15 +52,7 @@ def extract_seqs(filename, tok_to_idx, tag_to_idx):
         for seq in file_contents.split("\n\n")
     ]
 
-    seqs = [
-        (
-            [tok_to_idx[tok] for tok in seq[0]],
-            [tag_to_idx[tag] for tag in seq[1]]
-        ) for seq in seqs
-    ]
-
     return seqs
-
 
 def get_labeled_tokens(seq):
     tokens = []
@@ -68,7 +60,7 @@ def get_labeled_tokens(seq):
 
     for line in seq.split("\n"):
         token, _, _, label = line.rstrip().split(" ")
-        tokens.append(preprocess(token))
+        tokens.append(resize(token))
         labels.append(label)
 
     return (tokens, labels)
@@ -101,19 +93,19 @@ if __name__ == '__main__':
     save_obj(tok_to_idx, "tok_to_idx")
     save_obj(idx_to_tok, "idx_to_tok")
 
-    train_seqs = extract_seqs("conll2003/train.txt", tok_to_idx, tag_to_idx)
-    print("\nTotal train documents: " + str(len(train_seqs)))
+    train_seqs = extract_seqs("conll2003/train.txt")
+    print("\nTotal train sequences: " + str(len(train_seqs)))
     save_obj(train_seqs, "train_seqs")
 
-    val_seqs = extract_seqs("conll2003/valid.txt", tok_to_idx, tag_to_idx)
+    val_seqs = extract_seqs("conll2003/valid.txt")
     print("Total valid sequences: " + str(len(val_seqs)))
     save_obj(val_seqs, "val_seqs")
 
-    test_seqs = extract_seqs("conll2003/test.txt", tok_to_idx, tag_to_idx)
+    test_seqs = extract_seqs("conll2003/test.txt")
     print("Total test sequences: " + str(len(test_seqs)))
     save_obj(test_seqs, "test_seqs")
 
-    mini_seqs = extract_seqs("conll2003/mini.txt", tok_to_idx, tag_to_idx)
+    mini_seqs = extract_seqs("conll2003/mini.txt")
     print("Total mini sequences: " + str(len(mini_seqs)))
     save_obj(mini_seqs, "mini_seqs")
 

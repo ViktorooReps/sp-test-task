@@ -100,8 +100,10 @@ if __name__ == '__main__':
 
     data_args = dict(
         char_to_idx=char_to_idx, 
-        idx_to_tok=idx_to_tok,
-        max_token_len=max_word_len
+        tok_to_idx=tok_to_idx,
+        tag_to_idx=tag_to_idx,
+        max_token_len=max_word_len,
+        preprocessor=preprocess
     )
 
     mini_seqs = load_obj("mini_seqs")
@@ -135,17 +137,15 @@ if __name__ == '__main__':
 
     print("\nPre train results:")
     if args.mini:
-        mini_loss, mini_f1 = evaluate_model(model, 
-            get_dataloader(mini_data, **dl_args)
-        )
+        mini_loss, mini_f1 = evaluate_model(model, get_eval_dataloader(mini_data, **dl_args))
 
         mini_loss_list.append(mini_loss)
         mini_f1_list.append(mini_f1)
 
         print("[mini] loss: " + str(mini_loss) + " F1: " + str(mini_f1))
     else:
-        train_loss, train_f1 = evaluate_model(model, get_dataloader(train_data, **dl_args))
-        val_loss, val_f1 = evaluate_model(model, get_dataloader(val_data, **dl_args))
+        train_loss, train_f1 = evaluate_model(model, get_eval_dataloader(train_data, **dl_args))
+        val_loss, val_f1 = evaluate_model(model, get_eval_dataloader(val_data, **dl_args))
 
         train_loss_list.append(train_loss)
         val_loss_list.append(val_loss)
@@ -164,11 +164,11 @@ if __name__ == '__main__':
 
         if args.mini:
             train_epoch(
-                model, get_dataloader(mini_data, **dl_args),
+                model, get_train_dataloader(mini_data, **dl_args),
                 scheduler, optimizer
             )
 
-            mini_loss, mini_f1 = evaluate_model(model, get_dataloader(mini_data, **dl_args))
+            mini_loss, mini_f1 = evaluate_model(model, get_eval_dataloader(mini_data, **dl_args))
 
             mini_loss_list.append(mini_loss)
             mini_f1_list.append(mini_f1)
@@ -176,12 +176,12 @@ if __name__ == '__main__':
             print("[mini] loss: " + str(mini_loss) + " F1: " + str(mini_f1))
         else:
             train_epoch(
-                model, get_dataloader(train_data, **dl_args),
+                model, get_train_dataloader(train_data, **dl_args),
                 scheduler, optimizer
             )
 
-            train_loss, train_f1 = evaluate_model(model, get_dataloader(train_data, **dl_args))
-            val_loss, val_f1 = evaluate_model(model, get_dataloader(val_data, **dl_args))
+            train_loss, train_f1 = evaluate_model(model, get_eval_dataloader(train_data, **dl_args))
+            val_loss, val_f1 = evaluate_model(model, get_eval_dataloader(val_data, **dl_args))
 
             train_loss_list.append(train_loss)
             val_loss_list.append(val_loss)

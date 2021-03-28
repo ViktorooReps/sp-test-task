@@ -5,7 +5,7 @@ import random
 import numpy as np
 
 from torchcrf import CRF
-from torch.utils.data import Dataset, DataLoader, BatchSampler, SequentialSampler
+from torch.utils.data import Dataset, DataLoader, BatchSampler, SequentialSampler, RandomSampler
 from torch.nn.utils.rnn import pad_packed_sequence, pack_padded_sequence
 
 from pprint import pprint
@@ -50,10 +50,17 @@ class PaddingCollator:
         )
 
 
-def get_dataloader(data, batch_size, pad_collator):
+def get_train_dataloader(data, batch_size, pad_collator):
     return DataLoader(
         data, batch_size,  
-        shuffle=False, # TODO: shuffle
+        collate_fn=pad_collator,
+        drop_last=True,
+        sampler=RandomSampler(data)
+    )
+
+def get_eval_dataloader(data, batch_size, pad_collator):
+    return DataLoader(
+        data, batch_size,  
         collate_fn=pad_collator,
         drop_last=True,
         sampler=SequentialSampler(data)
@@ -61,23 +68,36 @@ def get_dataloader(data, batch_size, pad_collator):
 
 
 class Data(Dataset):
+    SEQS_TOKS = 0
+    SEQS_TAGS = 1
 
-    def __init__(self, seqs, char_to_idx, idx_to_tok, aug=False, max_token_len=20):
+    def __init__(self, seqs, char_to_idx, tok_to_idx, tag_to_idx, aug=False, 
+        max_token_len=20, preprocessor=None):
         self.seqs = seqs
         self.aug = aug
         self.max_token_len = max_token_len
         self.char_to_idx = char_to_idx
-        self.idx_to_tok = idx_to_tok
+        self.tok_to_idx = tok_to_idx
+        self.tag_to_idx = tag_to_idx
+
+        if preprocessor == None:
+            self.preprocessor = lambda x: x
+        else:
+            self.preprocessor = preprocessor
 
     def __len__(self):
         return len(self.seqs)
 
     def __getitem__(self, idx):
-        toks = [tok for tok in self.seqs[idx][0]]
-        tags = [tag for tag in self.seqs[idx][1]]
+        toks = [tok for tok in self.seqs[idx][self.SEQS_TOKS]]
+        tags = [tag for tag in self.seqs[idx][self.SEQS_TAGS]]
+        chars = [[char for char in tok] for tok in toks]
+
+        toks = [self.tok_to_idx[self.preprocessor(tok)] for tok in toks]
+        tags = [self.tag_to_idx[tag] for tag in tags]
         chars = [
-            [self.char_to_idx[char] for char in self.idx_to_tok[tok_idx]] 
-            for tok_idx in toks
+            [self.char_to_idx[char] for char in char_lst]
+            for char_lst in chars
         ]
 
         return chars, toks, tags
