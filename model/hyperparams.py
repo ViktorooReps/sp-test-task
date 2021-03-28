@@ -8,7 +8,7 @@ batch_size = 10     # default: 10
 
 seq_len = 50        # default: 50
 
-epochs = 50         # default: 50
+epochs = 70         # default: 50
 
 initial_lr = 0.015  # default: 0.015
 
