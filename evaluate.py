@@ -182,42 +182,42 @@ if __name__ == '__main__':
 
     model = load_obj("model")
 
-    test_tokens = load_obj("test_tokens")
-    test_labels = load_obj("test_labels")
+    data_args = dict(
+        char_to_idx=char_to_idx, 
+        tok_to_idx=tok_to_idx,
+        tag_to_idx=tag_to_idx,
+        max_token_len=max_word_len,
+        preprocessor=preprocess
+    )
 
-    test_data = Data(test_tokens, test_labels, 
-        tok_to_idx, char_to_idx, tag_to_idx, max_token_len=max_word_len,
-        padding=padding, preprocessor=preprocess)
+    train_seqs = load_obj("train_seqs")
+    train_data = Data(train_seqs, **data_args)
 
-    train_tokens = load_obj("train_tokens")
-    train_labels = load_obj("train_labels")
+    val_seqs = load_obj("val_seqs")
+    val_data = Data(val_seqs, **data_args)
 
-    train_data = Data(train_tokens, train_labels, 
-        tok_to_idx, char_to_idx, tag_to_idx, max_token_len=max_word_len,
-        padding=padding, preprocessor=preprocess)
+    test_seqs = load_obj("test_seqs")
+    test_data = Data(test_seqs, **data_args)
 
-    val_tokens = load_obj("val_tokens")
-    val_labels = load_obj("val_labels")
-
-    val_data = Data(val_tokens, val_labels, 
-        tok_to_idx, char_to_idx, tag_to_idx, max_token_len=max_word_len,
-        padding=padding, preprocessor=preprocess)
+    dl_args = dict(
+        batch_size=batch_size,
+        pad_collator=PaddingCollator(
+            char_pad=char_to_idx["<pad>"],
+            max_word_len=max_word_len,
+            tok_pad=tok_to_idx["<pad>"],
+            tag_pad=tag_to_idx["O"]
+        )
+    )
 
     print("\nEvaluating on test set")
-    test_loss, test_f1 = evaluate_model(
-        model, 
-        get_eval_dataloader(test_data, batch_size, seq_len)
-    )
+    test_loss, test_f1 = evaluate_model(model, get_eval_dataloader(test_data, **dl_args))
+
     print("Evaluating on train set")
-    train_loss, train_f1 = evaluate_model(
-        model, 
-        get_eval_dataloader(train_data, batch_size, seq_len)
-    )
+    train_loss, train_f1 = evaluate_model(model, get_eval_dataloader(train_data, **dl_args))
+
     print("Evaluating on valid set")
-    val_loss, val_f1 = evaluate_model(
-        model, 
-        get_eval_dataloader(val_data, batch_size, seq_len)
-    )
+    val_loss, val_f1 = evaluate_model(model, get_eval_dataloader(val_data, **dl_args))
+
     print("\n[test]  loss: " + str(test_loss) + " F1: " + str(test_f1))
     print("[train] loss: " + str(train_loss) + " F1: " + str(train_f1))
     print("[valid] loss: " + str(val_loss) + " F1: " + str(val_f1))
