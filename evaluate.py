@@ -1,6 +1,6 @@
 from model.hyperparams import *
 from model.nerc import *
-from utils.memory_management import load_obj, save_obj
+from utils.memory_management import load_obj, save_obj, limit_memory
 from utils.plotter import plot_last_run, plot_in_comparison
 from utils.reproducibility import seed_worker, seed
 from extract import preprocess
