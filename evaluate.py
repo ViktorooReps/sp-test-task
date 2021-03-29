@@ -2,6 +2,7 @@ from model.hyperparams import *
 from model.nerc import *
 from utils.memory_management import load_obj, save_obj
 from utils.plotter import plot_last_run, plot_in_comparison
+from utils.reproducibility import seed_worker, seed
 from extract import preprocess
 
 from torch.utils.data import DataLoader
@@ -176,6 +177,9 @@ def evaluate_model(model, dataloader):
     return (final_loss, f1)
 
 if __name__ == '__main__':
+    limit_memory(7 * 1024 * 1024 * 1024)
+    seed()
+
     char_to_idx = load_obj("char_to_idx")
     tag_to_idx = load_obj("tag_to_idx")
     tok_to_idx = load_obj("tok_to_idx")
@@ -201,6 +205,7 @@ if __name__ == '__main__':
 
     dl_args = dict(
         batch_size=batch_size,
+        worker_init_fn=seed_worker,
         pad_collator=PaddingCollator(
             char_pad=char_to_idx["<pad>"],
             max_word_len=max_word_len,

@@ -50,19 +50,21 @@ class PaddingCollator:
         )
 
 
-def get_train_dataloader(data, batch_size, pad_collator):
+def get_train_dataloader(data, batch_size, pad_collator, worker_init_fn):
     return DataLoader(
         data, batch_size,  
         collate_fn=pad_collator,
         drop_last=True,
+        worker_init_fn=worker_init_fn,
         sampler=RandomSampler(data)
     )
 
-def get_eval_dataloader(data, batch_size, pad_collator):
+def get_eval_dataloader(data, batch_size, pad_collator, worker_init_fn):
     return DataLoader(
         data, batch_size,  
         collate_fn=pad_collator,
         drop_last=True,
+        worker_init_fn=worker_init_fn,
         sampler=SequentialSampler(data)
     )
 
@@ -242,6 +244,6 @@ class CNNbLSTMCRF(nn.Module):
 
     def decode(self, emissions, seq_lens):
         """Returns unpadded predicted tags"""
-        
+
         return self.crf.decode(emissions, mask=self.build_mask(seq_lens))
 

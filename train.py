@@ -1,5 +1,6 @@
 from utils.memory_management import limit_memory, load_obj, save_obj
 from utils.plotter import plot_mini
+from utils.reproducibility import seed_worker, seed
 from model.nerc import *
 from extract import preprocess
 
@@ -37,6 +38,7 @@ def train_epoch(model, dataloader, scheduler, optimizer):
 
 if __name__ == '__main__':
     limit_memory(7 * 1024 * 1024 * 1024)
+    seed()
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--mini", action='store_true')
@@ -106,6 +108,7 @@ if __name__ == '__main__':
 
     dl_args = dict(
         batch_size=batch_size,
+        worker_init_fn=seed_worker,
         pad_collator=PaddingCollator(
             char_pad=char_to_idx["<pad>"],
             max_word_len=max_word_len,
