@@ -7,6 +7,7 @@ import re
 
 from model.hyperparams import max_word_len
 from utils.memory_management import limit_memory, load_obj, save_obj
+from utils.reproducibility import seed
 
 def preprocess(token):
     return str(resize(token)).lower()
@@ -70,7 +71,9 @@ def get_labeled_tokens(seq):
     return (tokens, labels)
 
 if __name__ == '__main__':
+    seed()
     limit_memory(7 * 1024 * 1024 * 1024)
+
     token_voc, char_voc, tag_voc = unpack(["conll2003/test.txt", "conll2003/train.txt", "conll2003/valid.txt"])
     token_voc.add("<pad>")
     char_voc.add("<pad>")

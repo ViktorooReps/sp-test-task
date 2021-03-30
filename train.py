@@ -41,9 +41,8 @@ if __name__ == '__main__':
     seed()
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--mini", action='store_true')
-    parser.add_argument("--info", action='store_true')
-    parser.add_argument("--scores", action='store_true')
+    parser.add_argument("--mini", action="store_true")
+    parser.add_argument("--active", action="store_true")
 
     args = parser.parse_args()
 
@@ -89,10 +88,10 @@ if __name__ == '__main__':
     )
 
     mini_seqs = load_obj("mini_seqs")
-    mini_data = Data(mini_seqs, **data_args)
+    mini_data = Data(mini_seqs, active=args.active, **data_args)
 
     train_seqs = load_obj("train_seqs")
-    train_data = Data(train_seqs, **data_args)
+    train_data = Data(train_seqs, active=args.active, **data_args)
 
     val_seqs = load_obj("val_seqs")
     val_data = Data(val_seqs, **data_args)
@@ -173,11 +172,6 @@ if __name__ == '__main__':
 
             print("[train] loss: " + str(train_loss) + " F1: " + str(train_f1))
             print("[valid] loss: " + str(val_loss) + " F1: " + str(val_f1))
-        
-        if args.info:
-            for name, param in model.named_parameters():
-                if param.requires_grad:
-                    print(name, "norm:", torch.norm(param.data).item())
 
     if args.mini:
         save_obj(mini_loss_list, "mini_loss_list")

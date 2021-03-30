@@ -76,8 +76,16 @@ class Data(Dataset):
     SEQS_TAGS = 1
 
     def __init__(self, seqs, char_to_idx, tok_to_idx, tag_to_idx, aug=False, 
-        max_token_len=20, preprocessor=None):
-        self.seqs = seqs
+        max_token_len=20, preprocessor=None, active=False, starting_size=100):
+        if active:
+            sampler = iter(RandomSampler(seqs))
+            chosen_indicies = set(next(sampler) for i in range(starting_size))
+            self.seqs = [seqs[i] for i in chosen_indicies]
+            self.stored = [seqs[i] for i in range(len(seqs)) if i not in chosen_indicies]
+        else:
+            self.seqs = seqs
+            self.stored = []
+
         self.aug = aug
         self.max_token_len = max_token_len
         self.char_to_idx = char_to_idx
@@ -106,6 +114,10 @@ class Data(Dataset):
 
         return chars, toks, tags
 
+    def add_seqs(self, indicies):
+        """Adds seqs from stored seqs"""
+
+        self.seqs += [self.stored[i] for i in indicies]
 
 class CNNbLSTMCRF(nn.Module):
     """
