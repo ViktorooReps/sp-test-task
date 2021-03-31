@@ -216,7 +216,7 @@ if __name__ == '__main__':
             )
         else:
             best_model, train_loss_list, train_f1_list, val_loss_list, val_f1_list = fit_model(
-                model, train_data, scheduler, optimizer, dl_args, val_data=val_data
+                model, train_data, scheduler, optimizer, dl_args, epochs=epochs, val_data=val_data
             )
 
         save_obj(train_loss_list, "train_loss_list")
