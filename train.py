@@ -270,7 +270,7 @@ if __name__ == '__main__':
                 model_args, scheduler_args, optimizer_args, inflating_data, dl_args, val_data, 
                 train_data, stopper)
         except KeyboardInterrupt:
-            print("\nTraining iterrupted! Restoring best model achieved so far...")
+            print("\nTraining interrupted! Restoring best model achieved so far...")
             best_model = stopper.get_model()
 
         save_obj(train_loss_list, "train_loss_list")
