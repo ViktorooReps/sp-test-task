@@ -176,6 +176,23 @@ def evaluate_model(model, dataloader):
 
     return (final_loss, f1)
 
+def evaluate_entropy(model, dataloader):
+    model.eval()
+
+    evaluated_entropy = []
+    with torch.no_grad():
+        for batch_idx, (chars, toks, idxs, seq_lens) in enumerate(dataloader):
+            chars = chars.to(device)
+            toks = toks.to(device)
+            idxs = idxs.to(device)
+
+            emissions = model(chars, toks, seq_lens).to(device)
+            entropy = model.entropy(emissions, seq_lens)
+
+            evaluated_entropy += entropy
+
+    return evaluated_entropy
+
 if __name__ == '__main__':
     limit_memory(7 * 1024 * 1024 * 1024)
     seed()

@@ -44,7 +44,7 @@ class PaddingCollator:
             tok_2d_idxs[seq_idx] += num_pads * [self.tok_pad]
             char_3d_idxs[seq_idx] += num_pads * [[self.char_pad] * self.max_word_len]
 
-            if type(lbls_or_idxs) == list: # idxs of seqs otherwise
+            if type(lbls_or_idxs[0]) == list: # idxs of seqs otherwise
                 lbls_or_idxs[seq_idx] += num_pads * [self.tag_pad]
 
         return (
@@ -117,9 +117,24 @@ class Data(Dataset):
         self.entropy_evaluation = False
 
     def __len__(self):
+        if self.entropy_evaluation:
+            return len(self.stored)
+
         return len(self.seqs)
 
     def __getitem__(self, idx):
+        if self.entropy_evaluation:
+            toks = [tok for tok in self.stored[idx][self.SEQS_TOKS]]
+            chars = [[char for char in tok] for tok in toks]
+
+            toks = [self.tok_to_idx[self.preprocessor(tok)] for tok in toks]
+            chars = [
+                [self.char_to_idx[char] for char in char_lst]
+                for char_lst in chars
+            ]
+
+            return chars, toks, idx
+
         toks = [tok for tok in self.seqs[idx][self.SEQS_TOKS]]
         chars = [[char for char in tok] for tok in toks]
 
@@ -128,9 +143,6 @@ class Data(Dataset):
             [self.char_to_idx[char] for char in char_lst]
             for char_lst in chars
         ]
-
-        if self.entropy_evaluation:
-            return chars, toks, idx
 
         tags = [tag for tag in self.seqs[idx][self.SEQS_TAGS]]
         tags = [self.tag_to_idx[tag] for tag in tags]
@@ -141,6 +153,8 @@ class Data(Dataset):
         """Adds seqs from stored seqs"""
 
         self.seqs += [self.stored[i] for i in indicies]
+        for index in sorted(indicies, reverse=True):
+            del self.stored[index]
 
     def entropy(self):
         self.entropy_evaluation = True
@@ -185,6 +199,9 @@ class EarlyStopper():
         save_obj(model, self.prefix + "model")
 
     def stop(self):
+        if self.curr_epoch == None:
+            return False
+
         if self.curr_epoch > self.max_epochs:
             return True
 
@@ -197,6 +214,15 @@ class EarlyStopper():
     def get_model(self):
         return load_obj(self.prefix + "model")
 
+
+
+class EntropyCRF(CRF):
+    
+    def __init__(self, *args, **kwargs):
+        super(EntropyCRF, self).__init__(*args, **kwargs)
+
+    def entropy(self, emissions, mask):
+        return [random.randint(0, 100) for i in range(len(emissions))]
 
 
 class CNNbLSTMCRF(nn.Module):
@@ -283,7 +309,7 @@ class CNNbLSTMCRF(nn.Module):
         nn.init.xavier_uniform_(self.hidden2emissions.weight)
         nn.init.zeros_(self.hidden2emissions.bias)
 
-        self.crf = CRF(len(tag_to_idx), batch_first=True)
+        self.crf = EntropyCRF(len(tag_to_idx), batch_first=True)
 
     def forward(self, chars, toks, seq_lengths):
         """
@@ -338,4 +364,7 @@ class CNNbLSTMCRF(nn.Module):
         """Returns unpadded predicted tags"""
 
         return self.crf.decode(emissions, mask=self.build_mask(seq_lens))
+
+    def entropy(self, emissions, seq_lens):
+        return self.crf.entropy(emissions, mask=self.build_mask(seq_lens))
 
