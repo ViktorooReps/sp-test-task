@@ -10,6 +10,8 @@ from torch.nn.utils.rnn import pad_packed_sequence, pack_padded_sequence
 
 from pprint import pprint
 
+from utils.memory_management import save_obj, load_obj
+
 
 class PaddingCollator:
     """Pads tokens with char_pad to max_word_len and tokens
@@ -31,7 +33,8 @@ class PaddingCollator:
             for trio in batch
         ]
         tok_2d_idxs = [trio[1] for trio in batch]
-        lbl_2d_idxs = [trio[2] for trio in batch]
+        seq_idxs = [trio[2] for trio in batch]
+        lbls_or_idxs = [trio[2] for trio in batch]
 
         seq_lengths = [len(seq) for seq in tok_2d_idxs]
         max_seq_len = max(seq_lengths)
@@ -39,18 +42,21 @@ class PaddingCollator:
         for seq_idx, curr_seq_len in enumerate(seq_lengths):
             num_pads = max_seq_len - curr_seq_len
             tok_2d_idxs[seq_idx] += num_pads * [self.tok_pad]
-            lbl_2d_idxs[seq_idx] += num_pads * [self.tag_pad]
             char_3d_idxs[seq_idx] += num_pads * [[self.char_pad] * self.max_word_len]
+
+            if type(lbls_or_idxs) == list: # idxs of seqs otherwise
+                lbls_or_idxs[seq_idx] += num_pads * [self.tag_pad]
 
         return (
             torch.tensor(char_3d_idxs, requires_grad=False),
             torch.tensor(tok_2d_idxs, requires_grad=False),
-            torch.tensor(lbl_2d_idxs, requires_grad=False), 
+            torch.tensor(lbls_or_idxs, requires_grad=False), 
             seq_lengths
         )
 
 
 def get_train_dataloader(data, batch_size, pad_collator, worker_init_fn):
+    data.train()
     return DataLoader(
         data, batch_size,  
         collate_fn=pad_collator,
@@ -60,6 +66,17 @@ def get_train_dataloader(data, batch_size, pad_collator, worker_init_fn):
     )
 
 def get_eval_dataloader(data, batch_size, pad_collator, worker_init_fn):
+    data.eval()
+    return DataLoader(
+        data, batch_size,  
+        collate_fn=pad_collator,
+        drop_last=True,
+        worker_init_fn=worker_init_fn,
+        sampler=SequentialSampler(data)
+    )
+
+def get_entropy_dataloader(data, batch_size, pad_collator, worker_init_fn):
+    data.entropy()
     return DataLoader(
         data, batch_size,  
         collate_fn=pad_collator,
@@ -97,20 +114,26 @@ class Data(Dataset):
         else:
             self.preprocessor = preprocessor
 
+        self.entropy_evaluation = False
+
     def __len__(self):
         return len(self.seqs)
 
     def __getitem__(self, idx):
         toks = [tok for tok in self.seqs[idx][self.SEQS_TOKS]]
-        tags = [tag for tag in self.seqs[idx][self.SEQS_TAGS]]
         chars = [[char for char in tok] for tok in toks]
 
         toks = [self.tok_to_idx[self.preprocessor(tok)] for tok in toks]
-        tags = [self.tag_to_idx[tag] for tag in tags]
         chars = [
             [self.char_to_idx[char] for char in char_lst]
             for char_lst in chars
         ]
+
+        if self.entropy_evaluation:
+            return chars, toks, idx
+
+        tags = [tag for tag in self.seqs[idx][self.SEQS_TAGS]]
+        tags = [self.tag_to_idx[tag] for tag in tags]
 
         return chars, toks, tags
 
@@ -118,6 +141,63 @@ class Data(Dataset):
         """Adds seqs from stored seqs"""
 
         self.seqs += [self.stored[i] for i in indicies]
+
+    def entropy(self):
+        self.entropy_evaluation = True
+
+    def train(self):
+        self.entropy_evaluation = False
+
+    def eval(self):
+        self.entropy_evaluation = False
+
+
+class EarlyStopper():
+    def __init__(self, min_epochs=None, max_epochs=None, tolerance=10, prefix="cached_"):
+        if (min_epochs == None):
+            self.min_epochs = 0
+        else:
+            self.min_epochs = min_epochs
+
+        if (max_epochs == None):
+            self.max_epochs = np.inf
+        else:
+            self.max_epochs = max_epochs
+
+        self.tolerance = tolerance
+        self.prefix = prefix
+        self.curr_epoch = None
+        self.last_save = None
+        self.last_score = None
+
+    def add_epoch(self, model, score):
+        if self.last_save == None:
+            self.curr_epoch = 0
+            self.rewrite_model(model, score)
+        else:
+            self.curr_epoch += 1
+            if score > self.last_score:
+                self.rewrite_model(model, score)
+
+    def rewrite_model(self, model, score):
+        self.last_save = self.curr_epoch
+        self.last_score = score
+        save_obj(model, self.prefix + "model")
+
+    def stop(self):
+        if self.curr_epoch > self.max_epochs:
+            return True
+
+        if self.curr_epoch > self.min_epochs:
+            if (self.curr_epoch - self.last_save) > self.tolerance:
+                return True
+
+        return False
+
+    def get_model(self):
+        return load_obj(self.prefix + "model")
+
+
 
 class CNNbLSTMCRF(nn.Module):
     """
