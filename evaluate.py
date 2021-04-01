@@ -1,7 +1,7 @@
 from model.hyperparams import *
 from model.nerc import *
 from utils.memory_management import load_obj, save_obj, limit_memory
-from utils.plotter import plot_last_run, plot_in_comparison
+from utils.plotter import plot_last_run, plot_in_comparison, plot_active
 from utils.reproducibility import seed_worker, seed
 from extract import preprocess
 
@@ -10,6 +10,8 @@ from pprint import pprint
 
 import matplotlib.pyplot as plt
 import numpy as np
+
+import argparse
 
 def split_tag(tag):
     """Tag format: [B/I]-[PER/ORG/LOC/MISC] ID-type"""
@@ -197,11 +199,19 @@ if __name__ == '__main__':
     limit_memory(7 * 1024 * 1024 * 1024)
     seed()
 
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--active", action="store_true")
+
+    args = parser.parse_args()
+
     char_to_idx = load_obj("char_to_idx")
     tag_to_idx = load_obj("tag_to_idx")
     tok_to_idx = load_obj("tok_to_idx")
 
-    model = load_obj("model")
+    if not args.active:
+        model = load_obj("model")
+    else:
+        model = load_obj("active_model")
 
     data_args = dict(
         char_to_idx=char_to_idx, 
@@ -248,5 +258,8 @@ if __name__ == '__main__':
     print("Epochs with best F1 scores on validation set:")
     print(val_f1s.argsort()[::-1])
 
-    plot_last_run()
-    plot_in_comparison(5)
+    if args.active:
+        plot_active(init=100, step=100)
+    else:
+        plot_last_run()
+        plot_in_comparison(5)

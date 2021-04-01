@@ -12,6 +12,63 @@ from utils.memory_management import load_obj
 
 import matplotlib.pyplot as plt
 
+def plot_active(init=100, step=100):
+    train_losses = load_obj("train_loss_list")
+    train_f1s = load_obj("train_f1_list")
+
+    val_losses = load_obj("val_loss_list")
+    val_f1s = load_obj("val_f1_list")
+
+    total_epochs = len(train_losses) * step + init
+
+    plt.figure(5)
+
+    plt.ylabel("Loss")
+    plt.title("Loss during active learning")
+    plt.xlabel("Dataset len")
+
+    plt.plot(
+        range(init, total_epochs, step), train_losses,
+        color="red",
+        label="train set"
+    )
+
+    plt.plot(
+        range(init, total_epochs, step), val_losses,
+        color="blue",
+        label="valid set"
+    )
+
+    plt.legend(loc="upper left")
+
+    plt.tight_layout()
+
+    plt.savefig("plots/active_loss_i" + str(init) + "_s" + str(step) + ".png")
+
+    plt.figure(6)
+
+    plt.ylabel("F1")
+    plt.title("F1 during active learning")
+    plt.xlabel("Dataset len")
+
+    plt.plot(
+        range(init, total_epochs, step), train_f1s,
+        color="red",
+        label="train set"
+    )
+
+    plt.plot(
+        range(init, total_epochs, step), val_f1s,
+        color="blue",
+        label="valid set"
+    )
+
+    plt.legend(loc="upper left")
+
+    plt.tight_layout()
+
+    plt.savefig("plots/active_f1_i" + str(init) + "_s" + str(step) + ".png")
+
 def plot_in_comparison(since_epoch):
     train_losses = load_obj("train_loss_list")[since_epoch:]
     train_f1s = load_obj("train_f1_list")[since_epoch:]
