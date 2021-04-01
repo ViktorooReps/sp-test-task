@@ -215,14 +215,65 @@ class EarlyStopper():
         return load_obj(self.prefix + "model")
 
 
-
 class EntropyCRF(CRF):
     
     def __init__(self, *args, **kwargs):
         super(EntropyCRF, self).__init__(*args, **kwargs)
 
     def entropy(self, emissions, mask):
-        return [random.randint(0, 100) for i in range(len(emissions))]
+        """Computes entropy for each emission in batch
+        
+        This function is a modified version of 
+        https://github.com/kmkurn/pytorch-crf/blob/master/torchcrf/__init__.py#L259"""
+
+        k = 9
+
+        if self.batch_first:
+            emissions = emissions.transpose(0, 1)
+            mask = mask.transpose(0, 1)
+
+        seq_length, batch_size = mask.shape
+
+        start_scores = self.start_transitions + emissions[0]
+        top_scores = [start_scores]
+        history = [start_scores.unsqueeze(2)]
+
+        for i in range(1, seq_length):
+            broadcast_emission = emissions[i].unsqueeze(1)
+
+            next_scores = []
+            for score in top_scores:
+                broadcast_score = score.unsqueeze(2)
+
+                next_score = broadcast_score + self.transitions + broadcast_emission
+                next_scores.append(next_score)
+
+            next_scores = torch.cat(next_scores, dim=1)
+            topk_scores, _ = next_scores.topk(k=k, dim=1)
+            history.append(topk_scores)
+
+            top_scores = []
+            for i in range(k):
+                score = topk_scores[:, i, :]
+                top_scores.append(score)
+
+        softmax = nn.Softmax(dim=0)
+
+        seq_ends = mask.long().sum(dim=0) - 1
+        batch_entropy = []
+
+        for idx in range(batch_size):
+            best_scores = history[seq_ends[idx]][idx, :, :]
+            
+            best_scores, _ = score.max(dim=1)
+
+            preds = softmax(best_scores)
+
+            batch_entropy.append(
+                torch.sum(torch.mul(preds, torch.log(preds))).item()
+            )
+
+        return batch_entropy
 
 
 class CNNbLSTMCRF(nn.Module):
@@ -353,7 +404,7 @@ class CNNbLSTMCRF(nn.Module):
                         torch.ones(seq_len, dtype=torch.bool),
                         torch.zeros(max_seq_len - seq_len, dtype=torch.bool)
                     ],
-                    dim=0
+                    dim=0,
                 ) for seq_len in seq_lens
             ])
 

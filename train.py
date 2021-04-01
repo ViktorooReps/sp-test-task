@@ -157,6 +157,8 @@ def fit_model_active(model_args, scheduler_args, optimizer_args, inflating_data,
 
         inflating_data.add_seqs(max_entropy_inds)
 
+        inflating_data.eval()
+
         train_loss, train_f1 = evaluate_model(model, get_eval_dataloader(train_data, **dl_args))
         train_losses.append(train_loss)
         train_f1s.append(train_f1)
