@@ -138,6 +138,9 @@ def fit_model_active(model_args, scheduler_args, optimizer_args, inflating_data,
     val_f1s = []
     model_num = 0
 
+    total_labeled = 0
+    total_seqs_added = 0
+
     while not stopper.stop():
         inflating_data.train()
         print("\nFitting model number " + str(model_num) 
@@ -152,16 +155,24 @@ def fit_model_active(model_args, scheduler_args, optimizer_args, inflating_data,
         best_model, _, _, _, _, = fit_model(model, inflating_data, scheduler, optimizer, dl_args, 
             val_data=val_data, stopper=model_stopper, skip_train_eval=True, verbose=False)
 
+        inflating_data.entropy()
         if not random_sampling:
-            inflating_data.entropy()
             max_entropy_inds = np.array(evaluate_entropy(
                 model, get_entropy_dataloader(inflating_data, **dl_args)
             )).argsort()[-request_seqs:][::-1]
 
+            for ind in max_entropy_inds:
+                total_labeled += len(inflating_data[ind])
+                total_seqs_added += 1
+
             inflating_data.add_seqs(max_entropy_inds)
         else:
-            sampler = iter(RandomSampler(seqs))
-            chosen_indicies = set(next(sampler) for i in range(starting_size))
+            sampler = iter(RandomSampler(inflating_data))
+            chosen_indicies = set(next(sampler) for i in range(request_seqs))
+
+            for ind in chosen_indicies:
+                total_labeled += len(inflating_data[ind])
+                total_seqs_added += 1
 
             inflating_data.add_seqs(chosen_indicies)
 
@@ -181,6 +192,11 @@ def fit_model_active(model_args, scheduler_args, optimizer_args, inflating_data,
 
         model_num += 1
         stopper.add_epoch(best_model, val_f1)
+
+    print("\nLabeled token statistics")
+    print("Total labeled:", total_labeled)
+    print("Average added sequence length:", total_labeled / total_seqs_added)
+
 
     best_model = stopper.get_model()
     return best_model, train_losses, train_f1s, val_losses, val_f1s
@@ -284,13 +300,19 @@ if __name__ == '__main__':
             print("\nTraining interrupted! Restoring best model achieved so far...")
             best_model = stopper.get_model()
 
-        save_obj(train_loss_list, "train_loss_list")
+        suff = "active_"
+        if args.randsampling:
+            pref = "_rand"
+        else:
+            pref = ""
+
+        save_obj(train_loss_list, suff + "train_loss_list" + pref)
         save_obj(val_loss_list, "val_loss_list")
 
-        save_obj(train_f1_list, "train_f1_list")
-        save_obj(val_f1_list, "val_f1_list")
+        save_obj(train_f1_list, suff + "train_f1_list" + pref)
+        save_obj(val_f1_list, suff + "val_f1_list" + pref)
 
-        save_obj(best_model, "active_model")
+        save_obj(best_model, suff + "active_model" + pref)
         
     else:
         model = CNNbLSTMCRF(char_to_idx, tok_to_idx, tag_to_idx, token_vecs)
