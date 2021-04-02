@@ -136,14 +136,16 @@ def fit_model_active(model_args, scheduler_args, optimizer_args, inflating_data,
     train_f1s = []
     val_losses = []
     val_f1s = []
-    
-    while not stopper.stop():
-        model_num = 0
+    model_num = 0
 
+    while not stopper.stop():
         inflating_data.train()
-        print("\nFitting model number " + str(model_num) + " on dataset of len " + str(len(inflating_data)))
+        print("\nFitting model number " + str(model_num) 
+            + " on dataset of len " + str(len(inflating_data))
+            + " with stored left " + str(len(inflating_data.stored)))
 
         model = CNNbLSTMCRF(**model_args)
+
         optimizer = optim.SGD(model.parameters(), **optimizer_args)
         scheduler = optim.lr_scheduler.LambdaLR(optimizer, **scheduler_args)
         model_stopper = EarlyStopper(prefix="cached_intermediate_", tolerance=5)

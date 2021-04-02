@@ -220,54 +220,44 @@ class EntropyCRF(CRF):
     def __init__(self, *args, **kwargs):
         super(EntropyCRF, self).__init__(*args, **kwargs)
 
-    def entropy(self, emissions, mask):
-        """Computes entropy for each emission in batch
-        
-        This function is a modified version of 
-        https://github.com/kmkurn/pytorch-crf/blob/master/torchcrf/__init__.py#L259"""
-
-        k = 9
+    def entropy(self, emissions, mask, k=9):
+        """Computes entropy for each emission in batch based on k best seqs"""
 
         if self.batch_first:
             emissions = emissions.transpose(0, 1)
             mask = mask.transpose(0, 1)
 
         seq_length, batch_size = mask.shape
+        seq_lens = mask.long().sum(dim=0)
 
-        start_scores = self.start_transitions + emissions[0]
-        top_scores = [start_scores]
-        history = [start_scores.unsqueeze(2)]
-
-        for i in range(1, seq_length):
-            broadcast_emission = emissions[i].unsqueeze(1)
-
-            next_scores = []
-            for score in top_scores:
-                broadcast_score = score.unsqueeze(2)
-
-                next_score = broadcast_score + self.transitions + broadcast_emission
-                next_scores.append(next_score)
-
-            next_scores = torch.cat(next_scores, dim=1)
-            topk_scores, _ = next_scores.topk(k=k, dim=1)
-            history.append(topk_scores)
-
-            top_scores = []
-            for i in range(k):
-                score = topk_scores[:, i, :]
-                top_scores.append(score)
-
+        batch_entropy = []
         softmax = nn.Softmax(dim=0)
 
-        seq_ends = mask.long().sum(dim=0) - 1
-        batch_entropy = []
+        # unvectorized forward pass
+        for batch_i in range(batch_size):
+            starting_score = self.start_transitions + emissions[0, batch_i]
 
-        for idx in range(batch_size):
-            best_scores = history[seq_ends[idx]][idx, :, :]
-            
-            best_scores, _ = score.max(dim=1)
+            topk_scores = [starting_score]
 
-            preds = softmax(best_scores)
+            for seq_i in range(seq_lens[batch_i]):
+                new_topk_scores = []
+                broadcasted_emission = emissions[seq_i, batch_i].unsqueeze(0)
+
+                for score in topk_scores:
+                    broadcasted_score = score.unsqueeze(1)
+                    next_score = broadcasted_score + self.transitions + broadcasted_emission
+                    new_topk_scores.append(next_score)
+
+                new_topk_scores = torch.cat(new_topk_scores, dim=0)
+                new_topk_scores, _ = torch.topk(new_topk_scores, k=k, dim=0)
+                
+                topk_scores = [new_topk_scores[i] for i in range(new_topk_scores.shape[0])]
+
+            topk_scores = torch.stack(topk_scores, dim=0)
+            topk_scores += self.end_transitions
+
+            topk_scores, _ = torch.max(topk_scores, dim=1)
+            preds = softmax(topk_scores)
 
             batch_entropy.append(
                 torch.sum(torch.mul(preds, torch.log(preds))).item()
