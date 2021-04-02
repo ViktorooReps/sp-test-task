@@ -290,7 +290,7 @@ if __name__ == '__main__':
 
     if args.active:
         inflating_data = Data(train_seqs, active=True, starting_size=starting_size, **data_args)
-        stopper = EarlyStopper(max_epochs=30, tolerance=5)
+        stopper = EarlyStopper(max_epochs=30, tolerance=30)
 
         try:
             best_model, train_loss_list, train_f1_list, val_loss_list, val_f1_list = fit_model_active(
