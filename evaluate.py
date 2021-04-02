@@ -1,7 +1,7 @@
 from model.hyperparams import *
 from model.nerc import *
 from utils.memory_management import load_obj, save_obj, limit_memory
-from utils.plotter import plot_last_run, plot_in_comparison, plot_active
+from utils.plotter import plot_last_run, plot_in_comparison, plot_active, plot_comparison_active
 from utils.reproducibility import seed_worker, seed
 from extract import preprocess
 
@@ -260,6 +260,7 @@ if __name__ == '__main__':
 
     if args.active:
         plot_active(init=100, step=100)
+        plot_comparison_active(init=100, step=100)
     else:
         plot_last_run()
         plot_in_comparison(5)

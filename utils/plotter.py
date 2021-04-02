@@ -69,6 +69,9 @@ def plot_active(init=100, step=100):
 
     plt.savefig("plots/active_f1_i" + str(init) + "_s" + str(step) + ".png")
 
+def plot_comparison_active(init=100, step=100):
+    pass #TODO
+
 def plot_in_comparison(since_epoch):
     train_losses = load_obj("train_loss_list")[since_epoch:]
     train_f1s = load_obj("train_f1_list")[since_epoch:]

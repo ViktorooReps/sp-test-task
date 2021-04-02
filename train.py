@@ -131,7 +131,7 @@ def fit_model(model, train_data, scheduler, optimizer, dl_args, epochs=10, val_d
     return best_model, train_losses, train_f1s, val_losses, val_f1s
 
 def fit_model_active(model_args, scheduler_args, optimizer_args, inflating_data, dl_args, val_data, 
-    train_data, stopper, request_seqs=100):
+    train_data, stopper, request_seqs=100, random_sampling=False):
     train_losses = []
     train_f1s = []
     val_losses = []
@@ -152,12 +152,18 @@ def fit_model_active(model_args, scheduler_args, optimizer_args, inflating_data,
         best_model, _, _, _, _, = fit_model(model, inflating_data, scheduler, optimizer, dl_args, 
             val_data=val_data, stopper=model_stopper, skip_train_eval=True, verbose=False)
 
-        inflating_data.entropy()
-        max_entropy_inds = np.array(evaluate_entropy(
-            model, get_entropy_dataloader(inflating_data, **dl_args)
-        )).argsort()[-request_seqs:][::-1]
+        if not random_sampling:
+            inflating_data.entropy()
+            max_entropy_inds = np.array(evaluate_entropy(
+                model, get_entropy_dataloader(inflating_data, **dl_args)
+            )).argsort()[-request_seqs:][::-1]
 
-        inflating_data.add_seqs(max_entropy_inds)
+            inflating_data.add_seqs(max_entropy_inds)
+        else:
+            sampler = iter(RandomSampler(seqs))
+            chosen_indicies = set(next(sampler) for i in range(starting_size))
+
+            inflating_data.add_seqs(chosen_indicies)
 
         inflating_data.eval()
 
@@ -186,6 +192,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--mini", action="store_true")
     parser.add_argument("--active", action="store_true")
+    parser.add_argument("--randsampling", action="store_true")
     parser.add_argument("--stopper", action="store_true")
 
     args = parser.parse_args()
@@ -266,13 +273,13 @@ if __name__ == '__main__':
     )
 
     if args.active:
-        inflating_data = Data(train_seqs, active=True, **data_args)
+        inflating_data = Data(train_seqs, active=True, starting_size=starting_size, **data_args)
         stopper = EarlyStopper(max_epochs=30, tolerance=5)
 
         try:
             best_model, train_loss_list, train_f1_list, val_loss_list, val_f1_list = fit_model_active(
                 model_args, scheduler_args, optimizer_args, inflating_data, dl_args, val_data, 
-                train_data, stopper)
+                train_data, stopper, request_seqs=request_seqs, random_sampling=args.randsampling)
         except KeyboardInterrupt:
             print("\nTraining interrupted! Restoring best model achieved so far...")
             best_model = stopper.get_model()
