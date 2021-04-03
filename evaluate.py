@@ -201,66 +201,69 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--active", action="store_true")
+    parser.add_argument("--only-plots", action="store_true")
 
     args = parser.parse_args()
 
-    char_to_idx = load_obj("char_to_idx")
-    tag_to_idx = load_obj("tag_to_idx")
-    tok_to_idx = load_obj("tok_to_idx")
+    if not args.only_plots:
+        char_to_idx = load_obj("char_to_idx")
+        tag_to_idx = load_obj("tag_to_idx")
+        tok_to_idx = load_obj("tok_to_idx")
 
-    if not args.active:
-        model = load_obj("model")
-    else:
-        model = load_obj("active_model")
+        if not args.active:
+            model = load_obj("model")
+        else:
+            model = load_obj("active_model")
 
-    data_args = dict(
-        char_to_idx=char_to_idx, 
-        tok_to_idx=tok_to_idx,
-        tag_to_idx=tag_to_idx,
-        max_token_len=max_word_len,
-        preprocessor=preprocess
-    )
-
-    train_seqs = load_obj("train_seqs")
-    train_data = Data(train_seqs, **data_args)
-
-    val_seqs = load_obj("val_seqs")
-    val_data = Data(val_seqs, **data_args)
-
-    test_seqs = load_obj("test_seqs")
-    test_data = Data(test_seqs, **data_args)
-
-    dl_args = dict(
-        batch_size=batch_size,
-        worker_init_fn=seed_worker,
-        pad_collator=PaddingCollator(
-            char_pad=char_to_idx["<pad>"],
-            max_word_len=max_word_len,
-            tok_pad=tok_to_idx["<pad>"],
-            tag_pad=tag_to_idx["O"]
+        data_args = dict(
+            char_to_idx=char_to_idx, 
+            tok_to_idx=tok_to_idx,
+            tag_to_idx=tag_to_idx,
+            max_token_len=max_word_len,
+            preprocessor=preprocess
         )
-    )
 
-    print("\nEvaluating on test set")
-    test_loss, test_f1 = evaluate_model(model, get_eval_dataloader(test_data, **dl_args))
+        train_seqs = load_obj("train_seqs")
+        train_data = Data(train_seqs, **data_args)
 
-    print("Evaluating on train set")
-    train_loss, train_f1 = evaluate_model(model, get_eval_dataloader(train_data, **dl_args))
+        val_seqs = load_obj("val_seqs")
+        val_data = Data(val_seqs, **data_args)
 
-    print("Evaluating on valid set")
-    val_loss, val_f1 = evaluate_model(model, get_eval_dataloader(val_data, **dl_args))
+        test_seqs = load_obj("test_seqs")
+        test_data = Data(test_seqs, **data_args)
 
-    print("\n[test]  loss: " + str(test_loss) + " F1: " + str(test_f1))
-    print("[train] loss: " + str(train_loss) + " F1: " + str(train_f1))
-    print("[valid] loss: " + str(val_loss) + " F1: " + str(val_f1))
+        dl_args = dict(
+            batch_size=batch_size,
+            worker_init_fn=seed_worker,
+            pad_collator=PaddingCollator(
+                char_pad=char_to_idx["<pad>"],
+                max_word_len=max_word_len,
+                tok_pad=tok_to_idx["<pad>"],
+                tag_pad=tag_to_idx["O"]
+            )
+        )
 
-    val_f1s = np.array(load_obj("val_f1_list"))
-    print("Epochs with best F1 scores on validation set:")
-    print(val_f1s.argsort()[::-1])
+        print("\nEvaluating on test set")
+        test_loss, test_f1 = evaluate_model(model, get_eval_dataloader(test_data, **dl_args))
+
+        print("Evaluating on train set")
+        train_loss, train_f1 = evaluate_model(model, get_eval_dataloader(train_data, **dl_args))
+
+        print("Evaluating on valid set")
+        val_loss, val_f1 = evaluate_model(model, get_eval_dataloader(val_data, **dl_args))
+
+        print("\n[test]  loss: " + str(test_loss) + " F1: " + str(test_f1))
+        print("[train] loss: " + str(train_loss) + " F1: " + str(train_f1))
+        print("[valid] loss: " + str(val_loss) + " F1: " + str(val_f1))
+
+        val_f1s = np.array(load_obj("val_f1_list"))
+        print("Epochs with best F1 scores on validation set:")
+        print(val_f1s.argsort()[::-1])
 
     if args.active:
-        plot_active(init=100, step=100)
-        plot_comparison_active(init=100, step=100)
+        plot_active(init=1500, step=100, suff="i1500s100/active_")
+        plot_active(init=1500, step=100, suff="i1500s100/active_", pref="_rand")
+        plot_comparison_active(init=1500, step=100, suff="i1500s100/active_")
     else:
         plot_last_run()
         plot_in_comparison(5)

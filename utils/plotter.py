@@ -10,14 +10,16 @@ sys.path.append(os.path.normpath(os.path.join(SCRIPT_DIR, PACKAGE_PARENT)))
 
 from utils.memory_management import load_obj
 
+from collections import defaultdict
+
 import matplotlib.pyplot as plt
 
-def plot_active(init=100, step=100):
-    train_losses = load_obj("train_loss_list")
-    train_f1s = load_obj("train_f1_list")
+def plot_active(init=100, step=100, suff="active_", pref=""):
+    train_losses = load_obj(suff + "train_loss_list" + pref)
+    train_f1s = load_obj(suff + "train_f1_list" + pref)
 
-    val_losses = load_obj("val_loss_list")
-    val_f1s = load_obj("val_f1_list")
+    val_losses = load_obj(suff + "val_loss_list" + pref)
+    val_f1s = load_obj(suff + "val_f1_list" + pref)
 
     total_epochs = len(train_losses) * step + init
 
@@ -43,7 +45,7 @@ def plot_active(init=100, step=100):
 
     plt.tight_layout()
 
-    plt.savefig("plots/active_loss_i" + str(init) + "_s" + str(step) + ".png")
+    plt.savefig("plots/active_loss_i" + str(init) + "_s" + str(step) + pref + ".png")
 
     plt.figure(6)
 
@@ -67,10 +69,96 @@ def plot_active(init=100, step=100):
 
     plt.tight_layout()
 
-    plt.savefig("plots/active_f1_i" + str(init) + "_s" + str(step) + ".png")
+    plt.savefig("plots/active_f1_i" + str(init) + "_s" + str(step) + pref + ".png")
 
-def plot_comparison_active(init=100, step=100):
-    pass #TODO
+def plot_comparison_active(init=100, step=100, suff="active_"):
+    pref = "_rand"
+
+    train_losses_r = load_obj(suff + "train_loss_list" + pref)
+    train_f1s_r = load_obj(suff + "train_f1_list" + pref)
+
+    val_losses_r = load_obj(suff + "val_loss_list" + pref)
+    val_f1s_r = load_obj(suff + "val_f1_list" + pref)
+
+    train_losses = load_obj(suff + "train_loss_list")
+    train_f1s = load_obj(suff + "train_f1_list")
+
+    val_losses = load_obj(suff + "val_loss_list")
+    val_f1s = load_obj(suff + "val_f1_list")
+
+    total_epochs = len(train_losses) * step + init
+
+    plt.figure(7)
+
+    plt.ylabel("Loss")
+    plt.title("Loss during active learning")
+    plt.xlabel("Dataset len")
+
+    plt.plot(
+        range(init, total_epochs, step), train_losses,
+        color="red",
+        label="train set + entropy sampling"
+    )
+
+    plt.plot(
+        range(init, total_epochs, step), val_losses,
+        color="blue",
+        label="valid set + entropy sampling"
+    )
+
+    plt.plot(
+        range(init, total_epochs, step), train_losses_r,
+        color="orange",
+        label="train set + random sampling"
+    )
+
+    plt.plot(
+        range(init, total_epochs, step), val_losses_r,
+        color="dodgerblue",
+        label="valid set + random sampling"
+    )
+
+    plt.legend(loc="upper left")
+
+    plt.tight_layout()
+
+    plt.savefig("plots/active_comp_loss_i" + str(init) + "_s" + str(step) + ".png")
+
+    plt.figure(8)
+
+    plt.ylabel("F1")
+    plt.title("F1 during active learning")
+    plt.xlabel("Dataset len")
+
+    plt.plot(
+        range(init, total_epochs, step), train_f1s,
+        color="red",
+        label="train set + entropy sampling"
+    )
+
+    plt.plot(
+        range(init, total_epochs, step), val_f1s,
+        color="blue",
+        label="valid set + entropy sampling"
+    )
+
+    plt.plot(
+        range(init, total_epochs, step), train_f1s_r,
+        color="orange",
+        label="train set + random sampling"
+    )
+
+    plt.plot(
+        range(init, total_epochs, step), val_f1s_r,
+        color="dodgerblue",
+        label="valid set + random sampling"
+    )
+
+    plt.legend(loc="upper left")
+
+    plt.tight_layout()
+
+    plt.savefig("plots/active_comp_f1_i" + str(init) + "_s" + str(step) + ".png")
 
 def plot_in_comparison(since_epoch):
     train_losses = load_obj("train_loss_list")[since_epoch:]
@@ -193,6 +281,44 @@ def plot_mini():
     plt.tight_layout()
 
     plt.savefig("plots/mini.png")
+
+def plot_hist(data):
+    plt.figure(9)
+
+    plt.ylabel("Count")
+    plt.xlabel("Sentence length")
+
+    bin_num = len(set(data))
+    plt.hist(data, bins=bin_num, rwidth=0.9)
+
+    plt.tight_layout()
+
+    plt.savefig("plots/hist.png")
+
+def plot_sent_entropies(x, y):
+    plt.figure(10)
+
+    plt.scatter(x, y, s=[1]*len(x), marker="o")
+
+    plt.ylabel("Entropy")
+    plt.xlabel("Sentence length")
+
+    lens = defaultdict(int)
+    cnts = defaultdict(int)
+    for xi, yi in zip(x, y):
+        lens[xi] += yi
+        cnts[xi] += 1
+
+    x = sorted(lens.keys())
+    y = [lens[xi] / cnts[xi] for xi in x]
+
+    plt.plot(x, y, color="red", label="average")
+    plt.legend(loc="lower right")
+
+    plt.tight_layout()
+
+    plt.savefig("plots/entropy.png")
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

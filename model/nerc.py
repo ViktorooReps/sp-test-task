@@ -260,7 +260,7 @@ class EntropyCRF(CRF):
             preds = softmax(topk_scores)
 
             batch_entropy.append(
-                torch.sum(torch.mul(preds, torch.log(preds))).item()
+                - torch.sum(torch.mul(preds, torch.log(preds))).item()
             )
 
         return batch_entropy

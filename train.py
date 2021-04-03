@@ -1,5 +1,5 @@
 from utils.memory_management import limit_memory, load_obj, save_obj
-from utils.plotter import plot_mini
+from utils.plotter import plot_mini, plot_hist, plot_sent_entropies
 from utils.reproducibility import seed_worker, seed
 from model.nerc import *
 from extract import preprocess
@@ -156,25 +156,21 @@ def fit_model_active(model_args, scheduler_args, optimizer_args, inflating_data,
             val_data=val_data, stopper=model_stopper, skip_train_eval=True, verbose=False)
 
         inflating_data.entropy()
+
         if not random_sampling:
-            max_entropy_inds = np.array(evaluate_entropy(
+            new_inds = np.array(evaluate_entropy(
                 model, get_entropy_dataloader(inflating_data, **dl_args)
             )).argsort()[-request_seqs:][::-1]
-
-            for ind in max_entropy_inds:
-                total_labeled += len(inflating_data[ind])
-                total_seqs_added += 1
-
-            inflating_data.add_seqs(max_entropy_inds)
         else:
             sampler = iter(RandomSampler(inflating_data))
-            chosen_indicies = set(next(sampler) for i in range(request_seqs))
+            new_inds = set(next(sampler) for i in range(request_seqs))
 
-            for ind in chosen_indicies:
-                total_labeled += len(inflating_data[ind])
-                total_seqs_added += 1
+        new_labeled = 0
+        for ind in new_inds:
+            new_labeled += len(inflating_data.stored[ind][0])
+            total_seqs_added += 1
 
-            inflating_data.add_seqs(chosen_indicies)
+        inflating_data.add_seqs(new_inds)
 
         inflating_data.eval()
 
@@ -190,6 +186,9 @@ def fit_model_active(model_args, scheduler_args, optimizer_args, inflating_data,
 
         print("[valid] loss: " + str(val_loss) + " F1: " + str(val_f1))
 
+        print("New labeled tokens:", new_labeled)
+
+        total_labeled += new_labeled
         model_num += 1
         stopper.add_epoch(best_model, val_f1)
 
@@ -307,12 +306,12 @@ if __name__ == '__main__':
             pref = ""
 
         save_obj(train_loss_list, suff + "train_loss_list" + pref)
-        save_obj(val_loss_list, "val_loss_list")
+        save_obj(val_loss_list, suff + "val_loss_list" + pref)
 
         save_obj(train_f1_list, suff + "train_f1_list" + pref)
         save_obj(val_f1_list, suff + "val_f1_list" + pref)
 
-        save_obj(best_model, suff + "active_model" + pref)
+        save_obj(best_model, suff + "model" + pref)
         
     else:
         model = CNNbLSTMCRF(char_to_idx, tok_to_idx, tag_to_idx, token_vecs)

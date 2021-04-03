@@ -22,9 +22,9 @@ token_emb_size = 100
 
 word_emb_size = 30
 
-starting_size = 1500
+starting_size = 100
 
-request_seqs = 150
+request_seqs = 100
 
 padding = "left"    # right or center
 
