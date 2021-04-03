@@ -295,7 +295,7 @@ class CNNbLSTMCRF(nn.Module):
 
     def __init__(self, char_to_idx, tok_to_idx, tag_to_idx, token_vecs, char_emb_size=30, 
         char_repr_size=30, token_emb_size=100, lstm_hidden_size=200, max_word_len=20, 
-        sent_len=10, dropout_rate=0.5, break_simmetry=True):
+        dropout_rate=0.5, break_simmetry=True):
         super(CNNbLSTMCRF, self).__init__()
 
         self.init_embeddings(

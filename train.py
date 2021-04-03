@@ -196,7 +196,6 @@ def fit_model_active(model_args, scheduler_args, optimizer_args, inflating_data,
     print("Total labeled:", total_labeled)
     print("Average added sequence length:", total_labeled / total_seqs_added)
 
-
     best_model = stopper.get_model()
     return best_model, train_losses, train_f1s, val_losses, val_f1s
 
@@ -289,12 +288,15 @@ if __name__ == '__main__':
 
     if args.active:
         inflating_data = Data(train_seqs, active=True, starting_size=starting_size, **data_args)
-        stopper = EarlyStopper(max_epochs=30, tolerance=30)
+        stopper = EarlyStopper(min_epochs=global_min_epochs, max_epochs=global_max_epochs,
+            tolerance=global_tolerance
+        )
 
         try:
             best_model, train_loss_list, train_f1_list, val_loss_list, val_f1_list = fit_model_active(
                 model_args, scheduler_args, optimizer_args, inflating_data, dl_args, val_data, 
-                train_data, stopper, request_seqs=request_seqs, random_sampling=args.randsampling)
+                train_data, stopper, request_seqs=request_seqs, random_sampling=args.randsampling
+            )
         except KeyboardInterrupt:
             print("\nTraining interrupted! Restoring best model achieved so far...")
             best_model = stopper.get_model()
@@ -335,7 +337,9 @@ if __name__ == '__main__':
             plot_mini()
         else:
             if args.stopper:
-                stopper = EarlyStopper(min_epochs=30, max_epochs=100)
+                stopper = EarlyStopper(min_epochs=global_min_epochs, max_epochs=global_max_epochs,
+                    tolerance=global_tolerance
+                )
                 best_model, train_loss_list, train_f1_list, val_loss_list, val_f1_list = fit_model(
                     model, train_data, scheduler, optimizer, dl_args, val_data=val_data, stopper=stopper 
                 )

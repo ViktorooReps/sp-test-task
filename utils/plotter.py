@@ -10,11 +10,12 @@ sys.path.append(os.path.normpath(os.path.join(SCRIPT_DIR, PACKAGE_PARENT)))
 
 from utils.memory_management import load_obj
 
-from collections import defaultdict
-
 import matplotlib.pyplot as plt
 
-def plot_active(init=100, step=100, suff="active_", pref=""):
+from celluloid import Camera
+from collections import defaultdict
+
+def plot_active(init=100, step=100, idd=100, suff="active_", pref=""):
     train_losses = load_obj(suff + "train_loss_list" + pref)
     train_f1s = load_obj(suff + "train_f1_list" + pref)
 
@@ -23,7 +24,7 @@ def plot_active(init=100, step=100, suff="active_", pref=""):
 
     total_epochs = len(train_losses) * step + init
 
-    plt.figure(5)
+    plt.figure(5 + idd)
 
     plt.ylabel("Loss")
     plt.title("Loss during active learning")
@@ -47,7 +48,7 @@ def plot_active(init=100, step=100, suff="active_", pref=""):
 
     plt.savefig("plots/active_loss_i" + str(init) + "_s" + str(step) + pref + ".png")
 
-    plt.figure(6)
+    plt.figure(6 + idd)
 
     plt.ylabel("F1")
     plt.title("F1 during active learning")
@@ -97,25 +98,25 @@ def plot_comparison_active(init=100, step=100, suff="active_"):
     plt.plot(
         range(init, total_epochs, step), train_losses,
         color="red",
-        label="train set + entropy sampling"
+        label="NSE on train"
     )
 
     plt.plot(
         range(init, total_epochs, step), val_losses,
         color="blue",
-        label="valid set + entropy sampling"
+        label="NSE on valid"
     )
 
     plt.plot(
         range(init, total_epochs, step), train_losses_r,
         color="orange",
-        label="train set + random sampling"
+        label="random on train"
     )
 
     plt.plot(
         range(init, total_epochs, step), val_losses_r,
         color="dodgerblue",
-        label="valid set + random sampling"
+        label="random on valid"
     )
 
     plt.legend(loc="upper left")
@@ -133,25 +134,25 @@ def plot_comparison_active(init=100, step=100, suff="active_"):
     plt.plot(
         range(init, total_epochs, step), train_f1s,
         color="red",
-        label="train set + entropy sampling"
+        label="NSE on train"
     )
 
     plt.plot(
         range(init, total_epochs, step), val_f1s,
         color="blue",
-        label="valid set + entropy sampling"
+        label="NSE on valid"
     )
 
     plt.plot(
         range(init, total_epochs, step), train_f1s_r,
         color="orange",
-        label="train set + random sampling"
+        label="random on train"
     )
 
     plt.plot(
         range(init, total_epochs, step), val_f1s_r,
         color="dodgerblue",
-        label="valid set + random sampling"
+        label="random on valid"
     )
 
     plt.legend(loc="upper left")
@@ -319,6 +320,36 @@ def plot_sent_entropies(x, y):
 
     plt.savefig("plots/entropy.png")
 
+def animate_entropy(data, suff="", pref=""):
+    fig = plt.figure(1010)
+    camera = Camera(fig)
+
+    for i, (x, y) in enumerate(data):
+        plt.scatter(x, y, s=[1]*len(x), marker="o")
+
+        plt.title("Entropy distribution after training", i, "model")
+
+        plt.ylabel("Entropy")
+        plt.xlabel("Sentence length")
+
+        lens = defaultdict(int)
+        cnts = defaultdict(int)
+        for xi, yi in zip(x, y):
+            lens[xi] += yi
+            cnts[xi] += 1
+
+        x = sorted(lens.keys())
+        y = [lens[xi] / cnts[xi] for xi in x]
+
+        plt.plot(x, y, color="red", label="average")
+        plt.legend(loc="lower right")
+
+        plt.tight_layout()
+
+        camera.snap()
+
+    animation = camera.animate()  
+    animation.save("plots/" + suff + "entropy" + pref + ".gif", writer="imagemagick")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
