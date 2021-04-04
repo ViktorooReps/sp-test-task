@@ -261,9 +261,9 @@ if __name__ == '__main__':
         print(val_f1s.argsort()[::-1])
 
     if args.active:
-        plot_active(init=1500, step=100, suff="i1500s100/active_")
-        plot_active(init=1500, step=100, suff="i1500s100/active_", pref="_rand", idd=200)
-        plot_comparison_active(init=1500, step=100, suff="i1500s100/active_")
+        plot_active(init=100, step=100, suff="i100s100/active_")
+        plot_active(init=100, step=100, suff="i100s100/active_", pref="_rand", idd=200)
+        plot_comparison_active(init=100, step=100, suff="i100s100/active_")
     else:
         plot_last_run()
         plot_in_comparison(5)

@@ -155,7 +155,7 @@ def plot_comparison_active(init=100, step=100, suff="active_"):
         label="random on valid"
     )
 
-    plt.legend(loc="upper left")
+    plt.legend(loc="lower right")
 
     plt.tight_layout()
 
@@ -212,7 +212,7 @@ def plot_in_comparison(since_epoch):
         label="valid set"
     )
 
-    plt.legend(loc="upper left")
+    plt.legend(loc="lower right")
 
     plt.tight_layout()
 
