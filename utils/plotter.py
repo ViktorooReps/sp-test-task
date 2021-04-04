@@ -15,14 +15,19 @@ import matplotlib.pyplot as plt
 #from celluloid import Camera
 from collections import defaultdict
 
-def plot_active(init=100, step=100, idd=100, suff="active_", pref=""):
+def plot_active(init=100, step=100, idd=100, suff="active_", pref="", coef=None):
     train_losses = load_obj(suff + "train_loss_list" + pref)
     train_f1s = load_obj(suff + "train_f1_list" + pref)
 
     val_losses = load_obj(suff + "val_loss_list" + pref)
     val_f1s = load_obj(suff + "val_f1_list" + pref)
 
-    total_epochs = len(train_losses) * step + init
+    if coef == None:
+        epoch_dynamic = list(range(init, len(train_losses) * step + init, step))
+    else:
+        epoch_dynamic = [init]
+        for i in range(len(train_losses) - 1):
+            epoch_dynamic.append(epoch_dynamic[-1] + epoch_dynamic[-1] * coef)
 
     plt.figure(5 + idd)
 
@@ -31,13 +36,13 @@ def plot_active(init=100, step=100, idd=100, suff="active_", pref=""):
     plt.xlabel("Dataset len")
 
     plt.plot(
-        range(init, total_epochs, step), train_losses,
+        epoch_dynamic, train_losses,
         color="red",
         label="train set"
     )
 
     plt.plot(
-        range(init, total_epochs, step), val_losses,
+        epoch_dynamic, val_losses,
         color="blue",
         label="valid set"
     )
@@ -46,7 +51,10 @@ def plot_active(init=100, step=100, idd=100, suff="active_", pref=""):
 
     plt.tight_layout()
 
-    plt.savefig("plots/active_loss_i" + str(init) + "_s" + str(step) + pref + ".png")
+    if coef == None:
+        plt.savefig("plots/active_loss_i" + str(init) + "_s" + str(step) + pref + ".png")
+    else:
+        plt.savefig("plots/active_loss_i" + str(init) + "_coef.png")
 
     plt.figure(6 + idd)
 
@@ -55,13 +63,13 @@ def plot_active(init=100, step=100, idd=100, suff="active_", pref=""):
     plt.xlabel("Dataset len")
 
     plt.plot(
-        range(init, total_epochs, step), train_f1s,
+        epoch_dynamic, train_f1s,
         color="red",
         label="train set"
     )
 
     plt.plot(
-        range(init, total_epochs, step), val_f1s,
+        epoch_dynamic, val_f1s,
         color="blue",
         label="valid set"
     )
@@ -70,7 +78,10 @@ def plot_active(init=100, step=100, idd=100, suff="active_", pref=""):
 
     plt.tight_layout()
 
-    plt.savefig("plots/active_f1_i" + str(init) + "_s" + str(step) + pref + ".png")
+    if coef == None:
+        plt.savefig("plots/active_f1_i" + str(init) + "_s" + str(step) + pref + ".png")
+    else:
+        plt.savefig("plots/active_f1_i" + str(init) + "_coef.png")
 
 def plot_comparison_active(init=100, step=100, suff="active_"):
     pref = "_rand"
