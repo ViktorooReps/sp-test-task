@@ -12,7 +12,7 @@ from utils.memory_management import load_obj
 
 import matplotlib.pyplot as plt
 
-from celluloid import Camera
+#from celluloid import Camera
 from collections import defaultdict
 
 def plot_active(init=100, step=100, idd=100, suff="active_", pref=""):
@@ -320,6 +320,7 @@ def plot_sent_entropies(x, y):
 
     plt.savefig("plots/entropy.png")
 
+"""
 def animate_entropy(data, suff="", pref=""):
     fig = plt.figure(1010)
     camera = Camera(fig)
@@ -349,7 +350,7 @@ def animate_entropy(data, suff="", pref=""):
         camera.snap()
 
     animation = camera.animate()  
-    animation.save("plots/" + suff + "entropy" + pref + ".gif", writer="imagemagick")
+    animation.save("plots/" + suff + "entropy" + pref + ".gif", writer="imagemagick")"""
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
