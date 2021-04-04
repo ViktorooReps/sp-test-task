@@ -131,7 +131,7 @@ def fit_model(model, train_data, scheduler, optimizer, dl_args, epochs=10, val_d
     return best_model, train_losses, train_f1s, val_losses, val_f1s
 
 def fit_model_active(model_args, scheduler_args, optimizer_args, inflating_data, dl_args, val_data, 
-    train_data, stopper, request_seqs=100, random_sampling=False):
+    train_data, stopper, request_seqs=100, random_sampling=False, coef=None):
     train_losses = []
     train_f1s = []
     val_losses = []
@@ -154,6 +154,9 @@ def fit_model_active(model_args, scheduler_args, optimizer_args, inflating_data,
         model_stopper = EarlyStopper(prefix="cached_intermediate_", tolerance=5)
         best_model, _, _, _, _, = fit_model(model, inflating_data, scheduler, optimizer, dl_args, 
             val_data=val_data, stopper=model_stopper, skip_train_eval=True, verbose=False)
+
+        if coef != None:
+            request_seqs = int(len(inflating_data) * coef)
 
         inflating_data.entropy()
 
@@ -295,7 +298,8 @@ if __name__ == '__main__':
         try:
             best_model, train_loss_list, train_f1_list, val_loss_list, val_f1_list = fit_model_active(
                 model_args, scheduler_args, optimizer_args, inflating_data, dl_args, val_data, 
-                train_data, stopper, request_seqs=request_seqs, random_sampling=args.randsampling
+                train_data, stopper, request_seqs=request_seqs, random_sampling=args.randsampling,
+                coef=coef
             )
         except KeyboardInterrupt:
             print("\nTraining interrupted! Restoring best model achieved so far...")

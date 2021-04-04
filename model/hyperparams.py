@@ -26,9 +26,11 @@ break_simmetry = True
 
 # active learning
 
-starting_size = 500
+starting_size = 100
 
 request_seqs = 100
+
+coef = 0.13 # if not None, request_seqs := curr_train_dataset_len * coef
 
 model_tolerance = 5
 
