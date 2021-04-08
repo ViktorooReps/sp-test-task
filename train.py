@@ -1,5 +1,6 @@
 from utils.memory_management import limit_memory, load_obj, save_obj
 from utils.plotter import plot_mini, plot_hist, plot_sent_entropies
+from utils.logging import Logger
 from utils.reproducibility import seed_worker, seed
 from model.nerc import *
 from extract import preprocess
@@ -131,19 +132,20 @@ def fit_model(model, train_data, scheduler, optimizer, dl_args, epochs=10, val_d
     return best_model, train_losses, train_f1s, val_losses, val_f1s
 
 def fit_model_active(model_args, scheduler_args, optimizer_args, inflating_data, dl_args, val_data, 
-    train_data, stopper, request_seqs=100, random_sampling=False, coef=None):
-    train_losses = []
-    train_f1s = []
-    val_losses = []
-    val_f1s = []
-    model_num = 0
+    train_data, stopper, exclude_tags=set(), request_seqs=100, random_sampling=False, coef=None):
 
-    total_labeled = 0
-    total_seqs_added = 0
+    inflating_data.train()
+
+    logger = Logger()
+    logger.register("labeled", "tagged", "seqs_num", "train_loss", "train_f1", "val_loss", "val_f1", "hist_data")
+    logger.labeled = 0
+    logger.tagged = 0
+    logger.hist_data = (0, 0)
+    logger.seqs_num = len(inflating_data)
 
     while not stopper.stop():
         inflating_data.train()
-        print("\nFitting model number " + str(model_num) 
+        print("\nFitting model number " + str(logger.times_written) 
             + " on dataset of len " + str(len(inflating_data))
             + " with stored left " + str(len(inflating_data.stored)))
 
@@ -155,52 +157,62 @@ def fit_model_active(model_args, scheduler_args, optimizer_args, inflating_data,
         best_model, _, _, _, _, = fit_model(model, inflating_data, scheduler, optimizer, dl_args, 
             val_data=val_data, stopper=model_stopper, skip_train_eval=True, verbose=False)
 
-        if coef != None:
-            request_seqs = int(len(inflating_data) * coef)
+        inflating_data.eval()
+
+        logger.train_loss, logger.train_f1 = evaluate_model(model, get_eval_dataloader(train_data, **dl_args))
+        print("[train] loss: " + str(logger.train_loss) + " F1: " + str(logger.train_f1))
+
+        logger.val_loss, logger.val_f1 = evaluate_model(model, get_eval_dataloader(val_data, **dl_args))
+        print("[valid] loss: " + str(logger.val_loss) + " F1: " + str(logger.val_f1))
 
         inflating_data.entropy()
 
+        if coef != None:
+            request_seqs = int(len(inflating_data.seqs) * coef)
+
         if not random_sampling:
-            new_inds = np.array(evaluate_entropy(
-                model, get_entropy_dataloader(inflating_data, **dl_args)
-            )).argsort()[-request_seqs:][::-1]
+            entropies = evaluate_entropy(model, get_entropy_dataloader(inflating_data, **dl_args))
+
+            # saving data for gif histogram
+            x = []
+            y = []
+            for ind, entropy in enumerate(entropies):
+                x.append(len(inflating_data.stored[ind][0]))
+                y.append(entropy)
+            logger.hist_data = (x, y)
+
+            new_inds = np.array(entropies).argsort()[-request_seqs:][::-1]
         else:
             sampler = iter(RandomSampler(inflating_data))
             new_inds = set(next(sampler) for i in range(request_seqs))
 
         new_labeled = 0
+        new_tagged = 0
         for ind in new_inds:
             new_labeled += len(inflating_data.stored[ind][0])
-            total_seqs_added += 1
+            for tag_idx in inflating_data.stored[ind][1]:
+                if tag_idx not in exclude_tags:
+                    new_tagged += 1
 
         inflating_data.add_seqs(new_inds)
 
-        inflating_data.eval()
-
-        train_loss, train_f1 = evaluate_model(model, get_eval_dataloader(train_data, **dl_args))
-        train_losses.append(train_loss)
-        train_f1s.append(train_f1)
-
-        print("[train] loss: " + str(train_loss) + " F1: " + str(train_f1))
-
-        val_loss, val_f1 = evaluate_model(model, get_eval_dataloader(val_data, **dl_args))
-        val_losses.append(val_loss)
-        val_f1s.append(val_f1)
-
-        print("[valid] loss: " + str(val_loss) + " F1: " + str(val_f1))
-
         print("New labeled tokens:", new_labeled)
+        print("New without O tag:", new_tagged)
 
-        total_labeled += new_labeled
-        model_num += 1
-        stopper.add_epoch(best_model, val_f1)
+        logger.write()
+
+        logger.labeled += new_labeled
+        logger.tagged += new_tagged
+        logger.seqs_num += len(new_inds)
+
+        stopper.add_epoch(best_model, logger.val_f1)
 
     print("\nLabeled token statistics")
-    print("Total labeled:", total_labeled)
-    print("Average added sequence length:", total_labeled / total_seqs_added)
+    print("Total labeled:", logger.labeled)
+    print("Average added sequence length:", logger.labeled / logger.seqs_num)
 
     best_model = stopper.get_model()
-    return best_model, train_losses, train_f1s, val_losses, val_f1s
+    return best_model, logger
 
 if __name__ == '__main__':
     limit_memory(7 * 1024 * 1024 * 1024)
@@ -295,27 +307,22 @@ if __name__ == '__main__':
             tolerance=global_tolerance
         )
 
-        try:
-            best_model, train_loss_list, train_f1_list, val_loss_list, val_f1_list = fit_model_active(
-                model_args, scheduler_args, optimizer_args, inflating_data, dl_args, val_data, 
-                train_data, stopper, request_seqs=request_seqs, random_sampling=args.randsampling,
-                coef=coef
-            )
-        except KeyboardInterrupt:
-            print("\nTraining interrupted! Restoring best model achieved so far...")
-            best_model = stopper.get_model()
-
         suff = "active_"
         if args.randsampling:
             pref = "_rand"
         else:
             pref = ""
 
-        save_obj(train_loss_list, suff + "train_loss_list" + pref)
-        save_obj(val_loss_list, suff + "val_loss_list" + pref)
-
-        save_obj(train_f1_list, suff + "train_f1_list" + pref)
-        save_obj(val_f1_list, suff + "val_f1_list" + pref)
+        try:
+            best_model, logger = fit_model_active(
+                model_args, scheduler_args, optimizer_args, inflating_data, dl_args, val_data, 
+                train_data, stopper, request_seqs=request_seqs, random_sampling=args.randsampling,
+                coef=coef, exclude_tags={"O"}
+            )
+            save_obj(logger, suff + "logger" + pref)
+        except KeyboardInterrupt:
+            print("\nTraining interrupted! Restoring best model achieved so far...")
+            best_model = stopper.get_model()
 
         save_obj(best_model, suff + "model" + pref)
         
