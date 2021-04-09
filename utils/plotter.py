@@ -2,6 +2,7 @@ import sys
 import os
 import argparse
 
+
 PACKAGE_PARENT = ".."
 SCRIPT_DIR = os.path.dirname(
     os.path.realpath(os.path.join(os.getcwd(), os.path.expanduser(__file__)))
@@ -12,7 +13,12 @@ from utils.memory_management import load_obj
 
 import matplotlib.pyplot as plt
 
-#from celluloid import Camera
+try:
+    from celluloid import Camera
+    camera_imported = True
+except ImportError:
+    camera_imported = False
+
 from collections import defaultdict
 
 def plot_active(init=100, step=100, idd=100, suff="active_", pref="", coef=None):
@@ -331,15 +337,306 @@ def plot_sent_entropies(x, y):
 
     plt.savefig("plots/entropy.png")
 
-"""
+def plot_from_active_logger(logger, rand_logger, name="active_comp_loggers"):
+    plt.figure(11)
+
+    plt.ylabel("Loss")
+    plt.title("Loss during active learning")
+    plt.xlabel("Number of sequences")
+
+    x = logger.list_seqs_num
+    y = logger.list_train_loss
+
+    plt.plot(
+        x, y,
+        color="red",
+        label="NSE on train"
+    )
+
+    y = logger.list_val_loss
+
+    plt.plot(
+        x, y,
+        color="blue",
+        label="NSE on valid"
+    )
+
+    x_r = rand_logger.list_seqs_num
+    y_r = rand_logger.list_train_loss
+
+    plt.plot(
+        x_r, y_r,
+        color="orange",
+        label="random on train"
+    )
+
+    y_r = rand_logger.list_val_loss
+
+    plt.plot(
+        x_r, y_r,
+        color="dodgerblue",
+        label="random on valid"
+    )
+
+    plt.legend(loc="upper left")
+
+    plt.tight_layout()
+
+    plt.savefig("plots/" + name + "_loss_seqs.png")
+
+    plt.figure(12)
+
+    plt.ylabel("F1")
+    plt.title("F1 during active learning")
+    plt.xlabel("Number of sequences")
+
+    x = logger.list_seqs_num
+    y = logger.list_train_f1
+
+    plt.plot(
+        x, y,
+        color="red",
+        label="NSE on train"
+    )
+
+    y = logger.list_val_f1
+
+    plt.plot(
+        x, y,
+        color="blue",
+        label="NSE on valid"
+    )
+
+    x_r = rand_logger.list_seqs_num
+    y_r = rand_logger.list_train_f1
+
+    plt.plot(
+        x_r, y_r,
+        color="orange",
+        label="random on train"
+    )
+
+    y_r = rand_logger.list_val_f1
+
+    plt.plot(
+        x_r, y_r,
+        color="dodgerblue",
+        label="random on valid"
+    )
+
+    plt.legend(loc="lower right")
+
+    plt.tight_layout()
+
+    plt.savefig("plots/" + name + "_f1_seqs.png")
+
+    plt.figure(21)
+
+    plt.ylabel("Loss")
+    plt.title("Loss during active learning")
+    plt.xlabel("Labeled tokens")
+
+    x = logger.list_labeled
+    y = logger.list_train_loss
+
+    plt.plot(
+        x, y,
+        color="red",
+        label="NSE on train"
+    )
+
+    y = logger.list_val_loss
+
+    plt.plot(
+        x, y,
+        color="blue",
+        label="NSE on valid"
+    )
+
+    x_r = rand_logger.list_labeled
+    y_r = rand_logger.list_train_loss
+
+    plt.plot(
+        x_r, y_r,
+        color="orange",
+        label="random on train"
+    )
+
+    y_r = rand_logger.list_val_loss
+
+    plt.plot(
+        x_r, y_r,
+        color="dodgerblue",
+        label="random on valid"
+    )
+
+    plt.legend(loc="upper left")
+
+    plt.tight_layout()
+
+    plt.savefig("plots/" + name + "_loss_labels.png")
+
+    plt.figure(22)
+
+    plt.ylabel("F1")
+    plt.title("F1 during active learning")
+    plt.xlabel("Labeled tokens")
+
+    x = logger.list_labeled
+    y = logger.list_train_f1
+
+    plt.plot(
+        x, y,
+        color="red",
+        label="NSE on train"
+    )
+
+    y = logger.list_val_f1
+
+    plt.plot(
+        x, y,
+        color="blue",
+        label="NSE on valid"
+    )
+
+    x_r = rand_logger.list_labeled
+    y_r = rand_logger.list_train_f1
+
+    plt.plot(
+        x_r, y_r,
+        color="orange",
+        label="random on train"
+    )
+
+    y_r = rand_logger.list_val_f1
+
+    plt.plot(
+        x_r, y_r,
+        color="dodgerblue",
+        label="random on valid"
+    )
+
+    plt.legend(loc="lower right")
+
+    plt.tight_layout()
+
+    plt.savefig("plots/" + name + "_f1_labels.png")
+
+    plt.figure(31)
+
+    plt.ylabel("Loss")
+    plt.title("Loss during active learning")
+    plt.xlabel("Labeled tokens (without 'O' tag)")
+
+    x = logger.list_tagged
+    y = logger.list_train_loss
+
+    plt.plot(
+        x, y,
+        color="red",
+        label="NSE on train"
+    )
+
+    y = logger.list_val_loss
+
+    plt.plot(
+        x, y,
+        color="blue",
+        label="NSE on valid"
+    )
+
+    x_r = rand_logger.list_tagged
+    y_r = rand_logger.list_train_loss
+
+    plt.plot(
+        x_r, y_r,
+        color="orange",
+        label="random on train"
+    )
+
+    y_r = rand_logger.list_val_loss
+
+    plt.plot(
+        x_r, y_r,
+        color="dodgerblue",
+        label="random on valid"
+    )
+
+    plt.legend(loc="upper left")
+
+    plt.tight_layout()
+
+    plt.savefig("plots/" + name + "_loss_tags.png")
+
+    plt.figure(32)
+
+    plt.ylabel("F1")
+    plt.title("F1 during active learning")
+    plt.xlabel("Labeled tokens (without 'O' tag)")
+
+    x = logger.list_tagged
+    y = logger.list_train_f1
+
+    plt.plot(
+        x, y,
+        color="red",
+        label="NSE on train"
+    )
+
+    y = logger.list_val_f1
+
+    plt.plot(
+        x, y,
+        color="blue",
+        label="NSE on valid"
+    )
+
+    x_r = rand_logger.list_tagged
+    y_r = rand_logger.list_train_f1
+
+    plt.plot(
+        x_r, y_r,
+        color="orange",
+        label="random on train"
+    )
+
+    y_r = rand_logger.list_val_f1
+
+    plt.plot(
+        x_r, y_r,
+        color="dodgerblue",
+        label="random on valid"
+    )
+
+    plt.legend(loc="lower right")
+
+    plt.tight_layout()
+
+    plt.savefig("plots/" + name + "_f1_tags.png")
+
+    if camera_imported:
+        animate_entropy(logger.list_hist_data, suff="i500s100_")
+        # animate_entropy(rand_logger.list_hist_data, suff="i100s100_", pref="_rand")
+
 def animate_entropy(data, suff="", pref=""):
     fig = plt.figure(1010)
+
+    plt.plot([], [], color="red", label="average")
+    plt.legend(loc="upper right")
+
     camera = Camera(fig)
 
     for i, (x, y) in enumerate(data):
-        plt.scatter(x, y, s=[1]*len(x), marker="o")
+        chopped_x = []
+        chopped_y = []
+        for xi, yi in zip(x, y):
+            if xi < 50:
+                chopped_x.append(xi)
+                chopped_y.append(yi)
 
-        plt.title("Entropy distribution after training", i, "model")
+        plt.scatter(chopped_x, chopped_y, s=[1]*len(chopped_x), marker="o", color="dodgerblue")
+
+        plt.title("Entropy distribution during training")
 
         plt.ylabel("Entropy")
         plt.xlabel("Sentence length")
@@ -347,27 +644,18 @@ def animate_entropy(data, suff="", pref=""):
         lens = defaultdict(int)
         cnts = defaultdict(int)
         for xi, yi in zip(x, y):
-            lens[xi] += yi
-            cnts[xi] += 1
+            if xi < 50:
+                lens[xi] += yi
+                cnts[xi] += 1
 
         x = sorted(lens.keys())
         y = [lens[xi] / cnts[xi] for xi in x]
 
-        plt.plot(x, y, color="red", label="average")
-        plt.legend(loc="lower right")
-
-        plt.tight_layout()
+        plt.plot(x, y, color="red")
 
         camera.snap()
 
     animation = camera.animate()  
-    animation.save("plots/" + suff + "entropy" + pref + ".gif", writer="imagemagick")"""
+    animation.save("plots/" + suff + "entropy" + pref + ".gif", writer="imagemagick")
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--since", type=int, default=0)
-
-    args = parser.parse_args()
-
-    plot_last_run()
-    plot_in_comparison(args.since)
+    plt.clf()
