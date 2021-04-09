@@ -38,7 +38,7 @@ python train.py --stopper
 ```bash
 python train.py --active
 ```
-Со рандомным сэмплированием новых данных:
+С рандомным сэмплированием новых данных:
 ```bash
 python train.py --active --randsampling
 ```
