@@ -26,7 +26,7 @@ break_simmetry = True
 
 # active learning
 
-starting_size = 100
+starting_size = 500
 
 request_seqs = 100
 
