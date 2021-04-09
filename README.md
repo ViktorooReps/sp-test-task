@@ -1,3 +1,7 @@
+# Сравнение стратегии сэмплирования N-Best Sequence Entropy со случайной в применении к задаче распознавания и классификации именованных сущностей
+
+![Alt text](plots/i100s100_entropy.gif?raw=true "Title")
+
 ```bash
 git clone https://github.com/ViktorooReps/sp-test-task
 cd sp-test-task
