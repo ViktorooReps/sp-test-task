@@ -1,0 +1,59 @@
+As part of the test task you should compare
+methods of sampling for model training under
+active learning sceanario for NERC task.
+
+In order to successfully complete this task
+you should:
+
+1.  Implement NERC baseline (for example, 
+    https://arxiv.org/pdf/1603.01354.pdf
+    but you can choose any other baseline)
+   
+2.  Prepare corpus for experiments (CoNLL-03 
+    https://data.deepai.org/conll2003.zip)
+   
+3.  Train baseline on the whole corpus, 
+    choose optimal hyperparameters (layer 
+    sizes, lr, lr_decay)
+    
+4.  Implement active learning strategy with
+    N-best Sequence Entropy sampling
+
+5.  Compare implemented sampling method with 
+    random sampling (plot learning curves) 
+    in the following active learning scenario: 
+    on each active learning step new model is 
+    trained with all the available training 
+    set
+    
+6.  Draw conclusions
+
+
+Texts dataset consists of test and train 
+parts (some corpuses also provide valid part,
+if not provided, part of train corpus can be
+used for validation). Test part is only used
+for evaluating purposes. It cannot be used 
+for choosing the best hyperparameters.
+
+For conducting experiment with active 
+learning taking random portion of train 
+corpus is suggested (init, for example, 100, 
+200, or 10% of available dataset) as initially
+available training set. Remaining portion of
+train corpus can be seen as unlabeled dataset
+which will be labeled in the process of active
+learning. On each active learning step k 
+samples are drawn from unlabeled set. Their
+labels are then recovered from train dataset.
+After that model trains for t epochs.
+
+In the process of experiment init, k and t can
+be varied to check results dependance on these
+parameters.
+
+As labelling complexity depends on sentence 
+length, labelling complexity should be 
+estimated - number of labels that had to be 
+labeled during active learning in addition to 
+other experiments
