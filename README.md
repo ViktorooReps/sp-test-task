@@ -1,54 +1,60 @@
-# Сравнение стратегии сэмплирования N-Best Sequence Entropy со случайной для активного обучения в применении к задаче распознавания и классификации именованных сущностей
+# N-Best Sequence Entropy and random sampling strategies comparison for Active Learning of Named Entity Recognition and Classification model 
 
 ![Alt text](plots/i100s100_entropy.gif?raw=true "Title")
+
+
+## Results reproduction
 
 ```bash
 git clone https://github.com/ViktorooReps/sp-test-task
 cd sp-test-task
 ```
 
-## 1. Установка зависимостей
+### 1. Install dependencies 
 ```bash
 pip install -r requirements.txt
 ```
 
-## 2. Загрузка эмбеддингов, препроцессирование данных
+### 2. Download embeddings, preprocess data
 ```bash
 ./init.sh
 ```
 
-## 3. Обучение модели
+### 3. Train model
 
-### 3.1 Без использования активного обучения
-На всем датасете:
+#### 3.1 Without active learning
+
+On the whole dataset:
 ```bash
 python train.py
 ```
-На маленькой части:
+On small part of dataset:
 ```bash
 python train.py --mini
 ```
-C определением оптимального количества эпох с помощью early stopping:
+With early stopping to determine optimal epoch count:
 ```bash
 python train.py --stopper
 ```
 
-### 3.2 С использованием активного обучения
-Со стратегией сэмплирования новых данных N-best Sequence Entropy:
+#### 3.2 With active learning
+
+With N-best Sequence Entropy sampling strategy:
 ```bash
 python train.py --active
 ```
-С рандомным сэмплированием новых данных:
+With random sampling strategy:
 ```bash
 python train.py --active --randsampling
 ```
 
-## 4. Оценка модели
-Полученной без активного обучения:
+### 4. Evaluate model
+
+Trained normally:
 ```bash
 python evaluate.py
 ```
-Полученной после активного обучения:
+Trained with active learning:
 ```bash
 python evaluate.py --active
 ```
